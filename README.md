@@ -1,2 +1,2 @@
-# macroecon_revenue_analysis
+# Macroeconomic Revenue Analysis
 Analyzing the relationship between macroeconomic indicators and revenue performance.
