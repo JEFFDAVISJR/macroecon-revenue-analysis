@@ -7,22 +7,29 @@
 #    https://shiny.posit.co/
 #
 
-library(shiny)
-
 # Define server logic required to draw a histogram
 function(input, output, session) {
+  
+  plot_data <- reactive({
+    
+    plot_data <- sales
+    
+    if (input$S_Cons_Order_Class != "All"){
+      plot_data <- plot_data %>%
+        filter(S_Cons_Order_Class == input$S_Cons_Order_Class)
+    }
+    
+    return(plot_data)
+  })
+  
+  # First plot  
+  output$distPlot <- renderPlot({
+    
+    plot_data() %>%
+      ggplot(aes(x = .data[[input$OrderClass]])) +
+      geom_histogram(bins = 50) 
+    
+  })  # <-- closes renderPlot
+  
+}  # <-- closes the function
 
-    output$distPlot <- renderPlot({
-
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white',
-             xlab = 'Waiting time to next eruption (in mins)',
-             main = 'Histogram of waiting times')
-
-    })
-
-}

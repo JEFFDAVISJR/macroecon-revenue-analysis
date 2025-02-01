@@ -7,27 +7,26 @@
 #    https://shiny.posit.co/
 #
 
-library(shiny)
-
 # Define UI for application that draws a histogram
 fluidPage(
-
-    # Application title
-    titlePanel("Old Faithful Geyser Data"),
-
-    # Sidebar with a slider input for number of bins
-    sidebarLayout(
-        sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
-        ),
-
-        # Show a plot of the generated distribution
-        mainPanel(
-            plotOutput("distPlot")
-        )
+  
+  # Application title
+  titlePanel("App Test"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      # Select an Order Class from the data or All
+      radioButtons("OrderClass",
+                   label = "Select an Order Class", 
+                   choices = c("All", sales |> distinct(S_Cons_Order_Class) |> pull(S_Cons_Order_Class) |> sort()))
+    ),  
+    
+    # Show a plot of the generated distribution
+    mainPanel(
+      fluidRow(
+        column(width = 12,
+               plotOutput("distPlot")) 
+      )
     )
+  )
 )
