@@ -16,17 +16,29 @@ fluidPage(
   sidebarLayout(
     sidebarPanel(
       # Select an Order Class from the data or All
-      radioButtons("OrderClass",
+      radioButtons("S_Cons_Order_Class",
                    label = "Select an Order Class", 
-                   choices = c("All", sales |> distinct(S_Cons_Order_Class) |> pull(S_Cons_Order_Class) |> sort()))
-    ),  
+                   choices = c("All Sales", sales |> distinct(S_Cons_Order_Class) |> pull(S_Cons_Order_Class) |> sort())),
+      
+      # Slider for Sales Percentile range
+      sliderInput("slider2", 
+                  label = "Sales Percentile Range", 
+                  min = 0, 
+                  max = 100, 
+                  value = 50)  
+    ),
     
-    # Show a plot of the generated distribution
+    # Show plots
     mainPanel(
       fluidRow(
         column(width = 12,
-               plotOutput("distPlot")) 
-      )
-    )
-  )
+               plotOutput("distPlot"))  
+      ),  
+      
+      fluidRow(
+        column(width = 12,
+               plotOutput("linePlot"))  
+      )  
+    )  
+  )  
 )

@@ -46,14 +46,14 @@ function(input, output, session) {
       title <- paste0(title, "")  
     }
     
-    # Aggregate the data by Month (and optionally by S_Cons_Order_Class)
+    
     aggregated_data <- plot_data() %>%
       group_by(Month, S_Cons_Order_Class) %>%
       summarize(Total_Sales = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
     
     ggplot(aggregated_data, aes(x = Month, y = Total_Sales, group = S_Cons_Order_Class, color = as.factor(S_Cons_Order_Class))) + 
       geom_line() +
-      geom_point() +  # Add points to the line plot
+      geom_point() +
       labs(
         title = title,
         y = "Total Rev",
