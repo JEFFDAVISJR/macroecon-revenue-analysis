@@ -25,7 +25,9 @@ fluidPage(
                   label = "Sales Percentile Range", 
                   min = 0, 
                   max = 100, 
-                  value = 50)  
+                  value = c(10, 90),  # Set default range (e.g., 10th to 90th percentile)
+                  step = 1, 
+                  animate = TRUE)
     ),
     
     # Show plots
