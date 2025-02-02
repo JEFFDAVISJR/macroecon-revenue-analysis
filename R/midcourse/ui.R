@@ -8,19 +8,20 @@
 #
 
 # Define UI for application that draws a histogram
+
 fluidPage(
   
-  # Application title
-  titlePanel("App Test"),
+  # app title
+  titlePanel("Data Exploration"),
   
   sidebarLayout(
     sidebarPanel(
-      # Select an Order Class from the data or All
+      # select an Order Class from the data or All
       radioButtons("S_Cons_Order_Class",
                    label = "Select an Order Class", 
                    choices = c("All Sales", sales |> distinct(S_Cons_Order_Class) |> pull(S_Cons_Order_Class) |> sort())),
       
-      # Slider for Sales Percentile range
+      # slider for Sales Percentile range
       sliderInput("slider2", 
                   label = "Sales Percentile Range", 
                   min = 0, 
@@ -30,30 +31,39 @@ fluidPage(
                   animate = TRUE)
     ),
     
-    # Show plots in tabs
+    # show plots in tabs
     mainPanel(
       tabsetPanel(
         
-        # First tab: Both Distribution and Line plots
+        # first tab: both dist and scatter
         tabPanel(
           "Plots", 
           fluidRow(
             column(width = 12,
-                   plotOutput("distPlot"))  # Distribution Plot
+                   div(class = "plot-container", plotOutput("distPlot")))  # dist plot
           ),
           fluidRow(
             column(width = 12,
-                   plotOutput("linePlot"))  # Line Plot
+                   div(
+                     style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
+                     plotOutput("scatterPlot", height = "300px")
+                   ))  # sp w/ border wrapped in div
           )
         ),
         
-        # Second tab: Blank tab
+        # Second tab: Not sure yet
         tabPanel(
           "Correlations",
-          h3("")
+          h3("Correlation Visualizations"),
+          fluidRow(
+            column(width = 12,
+                   div(class = "plot-container", plotOutput("linePlot")))  # line plot in correlations Tab
+          )
         )
       )
     )
   )
 )
+
+
 

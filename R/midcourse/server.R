@@ -5,7 +5,6 @@
 # Find out more about building applications with Shiny here:
 #
 #    https://shiny.posit.co/
-#
 
 # Define server logic required to draw a histogram
 
@@ -51,12 +50,12 @@ function(input, output, session) {
     
   })
   
-  # Second plot: Line Plot of Total Sales by Month (Filtered by Percentile Range)
+  # Second plot: facet of sales by year
   output$linePlot <- renderPlot({
     
     title <- glue("Line Plot of ({input$S_Cons_Order_Class}) by Month within Sales Percentile Range: {input$slider2[1]}% - {input$slider2[2]}%")
     
-    # Aggregating data by Year, Month, and Order Class
+    # group data by year,month, order class
     aggregated_data <- plot_data() %>%
       group_by(Year, Month, S_Cons_Order_Class) %>%
       summarize(Total_Sales = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
@@ -78,6 +77,21 @@ function(input, output, session) {
       facet_wrap(~ Year, scales = "free_y")  # Add facet grid by Year and set free y-axis scale
   })
   
-  
+  # Third plot: scatter. goal is to be able to test all variables
+  output$scatterPlot <- renderPlot({
+    
+    # Load the 'non_gdp' dataframe
+    non_gdp_data <- non_gdp 
+    
+    # testing scatter plot will use different variables later
+    ggplot(non_gdp_data, aes(x = New_Jobs, y = Unemployment)) +
+      geom_point(color = "green") +
+      labs(
+        title = "Testing a scatter plot: New Jobs vs. Unemployment",
+        x = "New Jobs",
+        y = "Unemployment Rate"
+      ) +
+      theme_minimal()  
+  })
 }
 
