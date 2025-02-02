@@ -30,17 +30,30 @@ fluidPage(
                   animate = TRUE)
     ),
     
-    # Show plots
+    # Show plots in tabs
     mainPanel(
-      fluidRow(
-        column(width = 12,
-               plotOutput("distPlot"))  
-      ),  
-      
-      fluidRow(
-        column(width = 12,
-               plotOutput("linePlot"))  
-      )  
-    )  
-  )  
+      tabsetPanel(
+        
+        # First tab: Both Distribution and Line plots
+        tabPanel(
+          "Plots", 
+          fluidRow(
+            column(width = 12,
+                   plotOutput("distPlot"))  # Distribution Plot
+          ),
+          fluidRow(
+            column(width = 12,
+                   plotOutput("linePlot"))  # Line Plot
+          )
+        ),
+        
+        # Second tab: Blank tab
+        tabPanel(
+          "Correlations",
+          h3("")
+        )
+      )
+    )
+  )
 )
+

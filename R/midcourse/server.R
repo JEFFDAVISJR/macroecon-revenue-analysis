@@ -56,9 +56,9 @@ function(input, output, session) {
     
     title <- glue("Line Plot of ({input$S_Cons_Order_Class}) by Month within Sales Percentile Range: {input$slider2[1]}% - {input$slider2[2]}%")
     
-    # Aggregating data by Month and Order Class
+    # Aggregating data by Year, Month, and Order Class
     aggregated_data <- plot_data() %>%
-      group_by(Month, S_Cons_Order_Class) %>%
+      group_by(Year, Month, S_Cons_Order_Class) %>%
       summarize(Total_Sales = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
     
     ggplot(aggregated_data, aes(x = Month, y = Total_Sales, group = S_Cons_Order_Class, color = as.factor(S_Cons_Order_Class))) + 
@@ -72,9 +72,12 @@ function(input, output, session) {
       ) +
       theme(
         plot.title = element_text(face = "bold"),
-        axis.text.x = element_text(angle = 45, hjust = 1)
-      )
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        strip.text = element_text(size = 14, face = "bold", color = "darkblue")  # Customize Year label (facet label)
+      ) +
+      facet_wrap(~ Year, scales = "free_y")  # Add facet grid by Year and set free y-axis scale
   })
+  
   
 }
 
