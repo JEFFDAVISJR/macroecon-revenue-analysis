@@ -55,7 +55,7 @@ function(input, output, session) {
     
     title <- glue("Line Plot of ({input$S_Cons_Order_Class}) by Month within Sales Percentile Range: {input$slider2[1]}% - {input$slider2[2]}%")
     
-    # group data by year,month, order class
+    # group data by year, month, order class
     aggregated_data <- plot_data() %>%
       group_by(Year, Month, S_Cons_Order_Class) %>%
       summarize(Total_Sales = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
@@ -93,5 +93,19 @@ function(input, output, session) {
       ) +
       theme_minimal()  
   })
+  
+  # Render the aggregated data as an interactive table using DT
+  output$aggregatedDataTable <- renderDT({
+    # group data by year, month, order class
+    aggregated_data <- plot_data() %>%
+      group_by(Year, Month, S_Cons_Order_Class) %>%
+      summarize(Total_Sales = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
+    
+    datatable(aggregated_data)  # Use datatable() for an interactive table
+  })
 }
+
+  
+
+
 

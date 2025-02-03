@@ -47,11 +47,11 @@ fluidPage(
                    div(
                      style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
                      plotOutput("scatterPlot", height = "300px")
-                   ))  # sp w/ border wrapped in div
+                   ))  # scatter plot with border wrapped in div
           )
         ),
         
-        # Second tab: Not sure yet
+        # Second tab: Correlation plots
         tabPanel(
           "Correlations",
           h3("Correlation Visualizations"),
@@ -59,11 +59,19 @@ fluidPage(
             column(width = 12,
                    div(class = "plot-container", plotOutput("linePlot")))  # line plot in correlations Tab
           )
+        ),
+        
+        # New tab: Aggregated Data Table
+        tabPanel(
+          "Aggregated Data",
+          h3("Aggregated Sales Data Table"),
+          DT::dataTableOutput("aggregatedDataTable")  # Interactive table displaying aggregated data
         )
       )
     )
   )
 )
+
 
 
 
