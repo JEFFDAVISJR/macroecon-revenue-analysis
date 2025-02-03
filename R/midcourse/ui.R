@@ -51,7 +51,7 @@ fluidPage(
           )
         ),
         
-        # Second tab: Correlation plots
+        # Second tab: corr plots
         tabPanel(
           "Correlations",
           h3("Correlation Visualizations"),
@@ -61,7 +61,7 @@ fluidPage(
           )
         ),
         
-        # New tab: Aggregated Data Table
+        # agg data table
         tabPanel(
           "Aggregated Data",
           h3("Aggregated Sales Data Table"),

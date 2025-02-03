@@ -7,37 +7,36 @@
 #    https://shiny.posit.co/
 
 # Define server logic required to draw a histogram
-
 function(input, output, session) {
   
-  # Reactive data based on the selected Order Class and Sales Percentile Range
+  # reactive data based on the selected Order Class and Sales Percentile Range
   plot_data <- reactive({
     
-    # Start with everything
+    # start with everything
     plot_data <- sales
     
-    # Filter on order class
+    # filter on order class
     if (input$S_Cons_Order_Class != "All Sales") {
       plot_data <- plot_data %>%
         filter(S_Cons_Order_Class == input$S_Cons_Order_Class)
     }
     
-    # Get the lower and upper bounds from the slider
+    # lower and upper bounds from the slider
     lower_percentile <- input$slider2[1]
     upper_percentile <- input$slider2[2]
     
-    # Calculate the cutoffs
+    # calculate the cutoffs
     lower_cutoff <- quantile(plot_data$`Total Rev`, lower_percentile / 100, na.rm = TRUE)
     upper_cutoff <- quantile(plot_data$`Total Rev`, upper_percentile / 100, na.rm = TRUE)
     
-    # Filter the data to include only those sales within the range
+    # filter the data to include only those sales within the range
     plot_data <- plot_data %>%
       filter(`Total Rev` >= lower_cutoff & `Total Rev` <= upper_cutoff)
     
     return(plot_data)
   })
   
-  # First plot: Distribution of Total Rev (Filtered by Percentile Range)
+  # first plot: Distribution of Total Rev (Filtered by Percentile Range)
   output$distPlot <- renderPlot({
     
     title <- glue("Distribution of {input$S_Cons_Order_Class} within Sales Percentile Range: {input$slider2[1]}% - {input$slider2[2]}%")
@@ -50,7 +49,7 @@ function(input, output, session) {
     
   })
   
-  # Second plot: facet of sales by year
+  # second plot: facet of sales by year
   output$linePlot <- renderPlot({
     
     title <- glue("Line Plot of ({input$S_Cons_Order_Class}) by Month within Sales Percentile Range: {input$slider2[1]}% - {input$slider2[2]}%")
@@ -77,35 +76,37 @@ function(input, output, session) {
       facet_wrap(~ Year, scales = "free_y")  # Add facet grid by Year and set free y-axis scale
   })
   
-  # Third plot: scatter. goal is to be able to test all variables
+  # third plot: scatter plot comparing New_Jobs and Total Rev
   output$scatterPlot <- renderPlot({
     
-    # Load the 'non_gdp' dataframe
-    non_gdp_data <- non_gdp 
+    # 1. create month_rev from plot_data, filtered by Order Class and Percentile Range
+    month_rev <- plot_data() %>%
+      group_by(`Year-Month`) %>%
+      summarize(Total_Rev = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
     
-    # testing scatter plot will use different variables later
-    ggplot(non_gdp_data, aes(x = New_Jobs, y = Unemployment)) +
+    # 2. merge month_rev with non_gdp_data by Year-Month
+    merged_data <- non_gdp %>%
+      left_join(month_rev, by = "Year-Month")
+    
+    # 3. plot New_Jobs vs Total_Rev
+    ggplot(merged_data, aes(x = New_Jobs, y = Total_Rev)) +
       geom_point(color = "green") +
       labs(
-        title = "Testing a scatter plot: New Jobs vs. Unemployment",
+        title = "Scatter Plot: New Jobs vs Total Revenue",
         x = "New Jobs",
-        y = "Unemployment Rate"
+        y = "Total Revenue"
       ) +
-      theme_minimal()  
+      theme_minimal()
   })
   
-  # Render the aggregated data as an interactive table using DT
+  # show aggregated data as table
   output$aggregatedDataTable <- renderDT({
     # group data by year, month, order class
     aggregated_data <- plot_data() %>%
       group_by(Year, Month, S_Cons_Order_Class) %>%
       summarize(Total_Sales = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
     
-    datatable(aggregated_data)  # Use datatable() for an interactive table
+    datatable(aggregated_data)
   })
 }
-
-  
-
-
 
