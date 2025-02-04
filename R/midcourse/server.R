@@ -47,7 +47,7 @@ function(input, output, session) {
       geom_histogram(bins = 50) +
       ggtitle(title) +
       theme(plot.title = element_text(face = "bold")) +  # Make title bold
-      scale_x_continuous(breaks = seq(0, max(plot_data()$`Total Rev`, na.rm = TRUE), by = 2500))  # thanks michael for scale x cont warmup
+      scale_x_continuous(breaks = seq(0, max(plot_data()$`Total Rev`, na.rm = TRUE), by = 2500))  # Adjust x-tick interval
   })
   
   # second plot: facet of sales by year
@@ -146,6 +146,17 @@ function(input, output, session) {
     # return the merged data with the new columns
     DT::datatable(merged_data, options = list(pageLength = 10))
   })
+  
+  # New histogram for GDP Sector Comparison (similar to the Economic Indicator tab)
+  output$distPlotGDP <- renderPlot({
+    title <- glue("Distribution of {input$S_Cons_Order_Class} within Sales Percentile Range: {input$slider2[1]}% - {input$slider2[2]}%")
+    
+    plot_data() %>%
+      ggplot(aes(x = `Total Rev`)) +  
+      geom_histogram(bins = 50) +
+      ggtitle(title) +
+      theme(plot.title = element_text(face = "bold")) +  # Make title bold
+      scale_x_continuous(breaks = seq(0, max(plot_data()$`Total Rev`, na.rm = TRUE), by = 2500))  # Adjust x-tick interval
+  })
 }
 
-  

@@ -12,7 +12,7 @@
 fluidPage(
   
   # app title
-  titlePanel("Data Exploration"),
+  titlePanel("Revenue and Economic Indicators"),
   
   sidebarLayout(
     sidebarPanel(
@@ -30,58 +30,76 @@ fluidPage(
                   step = 1, 
                   animate = TRUE),
       
-      # dropdown for x-axis var in sp
-      selectInput("scatter_x_var", 
-                  label = "Select Variable for X-Axis", 
-                  choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment")),
+      # Conditional dropdown for x-axis var in scatter plot
+      conditionalPanel(
+        condition = "input.tabs == 'Economic Indicator Comparison'",  # check if Economic Indicator Comparison tab is active
+        selectInput("scatter_x_var", 
+                    label = "Select Variable for X-Axis", 
+                    choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment"))
+      ),
       
-      # dropdown for Y-axis variable in sp
-      selectInput("scatter_y_var", 
-                  label = "Select Variable for Y-Axis", 
-                  choices = c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2"))
+      # Conditional dropdown for Y-axis variable in scatter plot
+      conditionalPanel(
+        condition = "input.tabs == 'Economic Indicator Comparison'",  # check if Economic Indicator Comparison tab is active
+        selectInput("scatter_y_var", 
+                    label = "Select Variable for Y-Axis", 
+                    choices = c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2"))
+      )
     ),
     
     # show plots in tabs
     mainPanel(
-      tabsetPanel(
-        
-        # first tab: both dist and scatter
-        tabPanel(
-          "Plots", 
-          fluidRow(
-            column(width = 12,
-                   div(class = "plot-container", plotOutput("distPlot")))  # dist plot
-          ),
-          fluidRow(
-            column(width = 12,
-                   div(
-                     style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
-                     plotOutput("scatterPlot", height = "300px")
-                   ))  # scatter plot with border wrapped in div
-          ),
-          
-          # table below scatter
-          fluidRow(
-            column(width = 12,
-                   tags$strong("Underlying Scatter Plot Data"),
-                   DT::dataTableOutput("aggregatedDataTable") 
-            )
-          )
-        ),
-        
-        # Second tab: corr plots
-        tabPanel(
-          "Facet Grid",
-          tags$strong("Order Class YoY Trends"),
-          fluidRow(
-            column(width = 12,
-                   div(class = "plot-container", plotOutput("linePlot")))
-          )
-        )
+      tabsetPanel(id = "tabs",  # Assign an id to the tabsetPanel for reference in conditionalPanel
+                  
+                  # first tab: both dist and scatter
+                  tabPanel(
+                    "Economic Indicator Comparison", 
+                    fluidRow(
+                      column(width = 12,
+                             div(class = "plot-container", plotOutput("distPlot")))  # dist plot
+                    ),
+                    fluidRow(
+                      column(width = 12,
+                             div(
+                               style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
+                               plotOutput("scatterPlot", height = "300px")
+                             ))  # scatter plot with border wrapped in div
+                    ),
+                    
+                    # table below scatter
+                    fluidRow(
+                      column(width = 12,
+                             tags$strong("Underlying Scatter Plot Data"),
+                             DT::dataTableOutput("aggregatedDataTable") 
+                      )
+                    )
+                  ),
+                  
+                  # New tab: GDP Sector Comparison
+                  tabPanel(
+                    "GDP Sector Comparison",
+                    fluidRow(
+                      column(width = 12,
+                             div(class = "plot-container", plotOutput("distPlotGDP")))  # Same histogram here
+                    )
+                  ),
+                  
+                  # Second tab: corr plots (now placed after GDP tab)
+                  tabPanel(
+                    "Facet Grid",
+                    tags$strong("Order Class YoY Trends"),
+                    fluidRow(
+                      column(width = 12,
+                             div(class = "plot-container", plotOutput("linePlot")))
+                    )
+                  )
       )
     )
   )
 )
+
+
+
 
 
 
