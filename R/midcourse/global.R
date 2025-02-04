@@ -11,4 +11,4 @@ gdp <- read_csv("./data/read_gdp_sector_pivot_clean.csv")
 non_gdp <- read_csv("./data/read_n_gdp_var_clean.csv")
 non_gdp_var <- c("CCI", "Fed_Funds_Rate", "New_Jobs", "Jet_Fuel", "Unemployment")
 month_offset <- c("Year-Month", "Year-Month_Offset1", "Year-Month_Offset2")
-
+total_offset_var <-c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2")

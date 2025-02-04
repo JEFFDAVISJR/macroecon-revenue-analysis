@@ -33,12 +33,7 @@ fluidPage(
       # dropdown for x-axis var in scatter plot
       selectInput("scatter_x_var", 
                   label = "Select Variable for X-Axis", 
-                  choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment")),
-      
-      # dropdown for selecting an Offset Choice
-      selectInput("offset_choice", 
-                  label = "Select Offset Choice", 
-                  choices = month_offset)  # Assuming month_offset is defined globally
+                  choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment"))
     ),
     
     # show plots in tabs
@@ -58,6 +53,14 @@ fluidPage(
                      style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
                      plotOutput("scatterPlot", height = "300px")
                    ))  # scatter plot with border wrapped in div
+          ),
+          
+          # table below scatter
+          fluidRow(
+            column(width = 12,
+                   ("Aggregated Sales Table"),
+                   DT::dataTableOutput("aggregatedDataTable") 
+            )
           )
         ),
         
@@ -67,20 +70,16 @@ fluidPage(
           h3("Correlation Visualizations"),
           fluidRow(
             column(width = 12,
-                   div(class = "plot-container", plotOutput("linePlot")))  # line plot in correlations Tab
+                   div(class = "plot-container", plotOutput("linePlot")))
           )
-        ),
-        
-        # Aggregated data table
-        tabPanel(
-          "Aggregated Data",
-          h3("Aggregated Sales Data Table"),
-          DT::dataTableOutput("aggregatedDataTable")  # Interactive table displaying aggregated data
         )
       )
     )
   )
 )
+
+
+
 
 
 
