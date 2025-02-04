@@ -9,3 +9,6 @@ sales <- sales %>%
 
 gdp <- read_csv("./data/read_gdp_sector_pivot_clean.csv")
 non_gdp <- read_csv("./data/read_n_gdp_var_clean.csv")
+non_gdp_var <- c("CCI", "Fed_Fund_Rate", "New_Jobs", "Jet Fuel (Price/Gallon)", "Unemployment")
+
+

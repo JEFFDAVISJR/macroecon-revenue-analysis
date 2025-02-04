@@ -7,6 +7,7 @@
 #    https://shiny.posit.co/
 
 # Define server logic required to draw a histogram
+
 function(input, output, session) {
   
   # reactive data based on the selected Order Class and Sales Percentile Range
@@ -88,15 +89,19 @@ function(input, output, session) {
     merged_data <- non_gdp %>%
       left_join(month_rev, by = "Year-Month")
     
-    # 3. plot New_Jobs vs Total_Rev
-    ggplot(merged_data, aes(x = New_Jobs, y = Total_Rev)) +
-      geom_point(color = "green") +
+    # 3. Get the selected variable for the x-axis dynamically
+    x_var <- input$scatter_x_var
+    
+    # 4. plot the selected variable against Total_Rev
+    ggplot(merged_data, aes_string(x = x_var, y = "Total_Rev")) +
+      geom_point(color = "darkblue") +
       labs(
-        title = "Scatter Plot: New Jobs vs Total Revenue",
-        x = "New Jobs",
+        title = glue("Scatter Plot: {x_var} vs Total Revenue"),
+        x = x_var,
         y = "Total Revenue"
       ) +
-      theme_minimal()
+      theme_minimal() +
+      geom_smooth(method = lm)
   })
   
   # show aggregated data as table
@@ -109,4 +114,5 @@ function(input, output, session) {
     datatable(aggregated_data)
   })
 }
+
 
