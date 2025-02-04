@@ -77,22 +77,31 @@ function(input, output, session) {
       facet_wrap(~ Year, scales = "free_y")  # Add facet grid by Year and set free y-axis scale
   })
   
-  # third plot: scatter plot comparing New_Jobs and Total Rev
   output$scatterPlot <- renderPlot({
     
-    # 1. create month_rev from plot_data, filtered by Order Class and Percentile Range
+    # 1. Create month_rev from plot_data, filtered by Order Class and Percentile Range
     month_rev <- plot_data() %>%
       group_by(`Year-Month`) %>%
       summarize(Total_Rev = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
     
-    # 2. merge month_rev with non_gdp_data by Year-Month
-    merged_data <- non_gdp %>%
-      left_join(month_rev, by = "Year-Month")
+    # 2. Dynamically adjust the join column based on the selected offset
+    offset_choice <- input$offset_choice
     
-    # 3. Get the selected variable for the x-axis dynamically
+    # Dynamically set the `by` argument to use different column names for join based on offset choice
+    join_columns <- switch(offset_choice,
+                           "Year-Month" = c("Year-Month" = "Year-Month"),  # For 'Year-Month', use 'Year-Month' in both tibbles
+                           "Year-Month_Offset1" = c("Year-Month" = "Year-Month_Offset1"),  # For 'Year-Month_Offset1', join with 'Year-Month_Offset1'
+                           "Year-Month_Offset2" = c("Year-Month" = "Year-Month_Offset2")   # For 'Year-Month_Offset2', join with 'Year-Month_Offset2'
+    )
+    
+    # 3. Merge month_rev with non_gdp using the dynamically set join column
+    merged_data <- non_gdp %>%
+      left_join(month_rev, by = join_columns)  # Use the dynamically set join columns
+    
+    # 4. Get selected variable for the x-axis 
     x_var <- input$scatter_x_var
     
-    # 4. plot the selected variable against Total_Rev
+    # 5. Plot the selected x-axis variable against Total_Rev
     ggplot(merged_data, aes_string(x = x_var, y = "Total_Rev")) +
       geom_point(color = "darkblue") +
       labs(
@@ -103,16 +112,7 @@ function(input, output, session) {
       theme_minimal() +
       geom_smooth(method = lm)
   })
-  
-  # show aggregated data as table
-  output$aggregatedDataTable <- renderDT({
-    # group data by year, month, order class
-    aggregated_data <- plot_data() %>%
-      group_by(Year, Month, S_Cons_Order_Class) %>%
-      summarize(Total_Sales = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
-    
-    datatable(aggregated_data)
-  })
 }
+
 
 

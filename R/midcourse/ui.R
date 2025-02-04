@@ -28,7 +28,17 @@ fluidPage(
                   max = 100, 
                   value = c(10, 90),  # Set default range (e.g., 10th to 90th percentile)
                   step = 1, 
-                  animate = TRUE)
+                  animate = TRUE),
+      
+      # dropdown for x-axis var in scatter plot
+      selectInput("scatter_x_var", 
+                  label = "Select Variable for X-Axis", 
+                  choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment")),
+      
+      # dropdown for selecting an Offset Choice
+      selectInput("offset_choice", 
+                  label = "Select Offset Choice", 
+                  choices = month_offset)  # Assuming month_offset is defined globally
     ),
     
     # show plots in tabs
@@ -53,7 +63,7 @@ fluidPage(
         
         # Second tab: corr plots
         tabPanel(
-          "Correlations",
+          "Facet Grid",
           h3("Correlation Visualizations"),
           fluidRow(
             column(width = 12,
@@ -61,7 +71,7 @@ fluidPage(
           )
         ),
         
-        # agg data table
+        # Aggregated data table
         tabPanel(
           "Aggregated Data",
           h3("Aggregated Sales Data Table"),
@@ -71,6 +81,9 @@ fluidPage(
     )
   )
 )
+
+
+
 
 
 
