@@ -16,7 +16,7 @@ fluidPage(
   
   sidebarLayout(
     sidebarPanel(
-      # select an Order Class from the data or All
+      # select an order class from the data or All
       radioButtons("S_Cons_Order_Class",
                    label = "Select an Order Class", 
                    choices = c("All Sales", sales |> distinct(S_Cons_Order_Class) |> pull(S_Cons_Order_Class) |> sort())),
@@ -30,10 +30,15 @@ fluidPage(
                   step = 1, 
                   animate = TRUE),
       
-      # dropdown for x-axis var in scatter plot
+      # dropdown for x-axis var in sp
       selectInput("scatter_x_var", 
                   label = "Select Variable for X-Axis", 
-                  choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment"))
+                  choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment")),
+      
+      # dropdown for Y-axis variable in sp
+      selectInput("scatter_y_var", 
+                  label = "Select Variable for Y-Axis", 
+                  choices = c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2"))
     ),
     
     # show plots in tabs
@@ -58,7 +63,7 @@ fluidPage(
           # table below scatter
           fluidRow(
             column(width = 12,
-                   ("Aggregated Sales Table"),
+                   tags$strong("Underlying Scatter Plot Data"),
                    DT::dataTableOutput("aggregatedDataTable") 
             )
           )
@@ -67,7 +72,7 @@ fluidPage(
         # Second tab: corr plots
         tabPanel(
           "Facet Grid",
-          h3("Correlation Visualizations"),
+          tags$strong("Order Class YoY Trends"),
           fluidRow(
             column(width = 12,
                    div(class = "plot-container", plotOutput("linePlot")))
@@ -77,6 +82,7 @@ fluidPage(
     )
   )
 )
+
 
 
 
