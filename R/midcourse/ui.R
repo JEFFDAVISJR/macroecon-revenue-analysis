@@ -8,20 +8,19 @@
 #
 
 # Define UI for application that draws a histogram
-
 fluidPage(
   
-  # app title
+  # App title
   titlePanel("Revenue and Economic Indicators"),
   
   sidebarLayout(
     sidebarPanel(
-      # select an order class from the data or All
+      # Select an order class from the data or All
       radioButtons("S_Cons_Order_Class",
                    label = "Select an Order Class", 
                    choices = c("All Sales", sales |> distinct(S_Cons_Order_Class) |> pull(S_Cons_Order_Class) |> sort())),
       
-      # slider for Sales Percentile range
+      # Slider for Sales Percentile range
       sliderInput("slider2", 
                   label = "Sales Percentile Range", 
                   min = 0, 
@@ -54,7 +53,7 @@ fluidPage(
                     choices = c("Accommodation_Food_Services", "Agriculture_FFH", "Air_Trans", "Arts_Entertainment_Rec", 
                                 "Construction", "Educational_Health_Social", "Federal", "Finance_Ins_RealEstate", 
                                 "Information", "Manufacturing", "Mining", "Other_Services_Not_Government", 
-                                "Other_Trans_Support_ Activity", "Pipeline_Transportation", "Professional_ Business_Services", 
+                                "Other_Trans_Support_Activity", "Pipeline_Transportation", "Professional_Business_Services", 
                                 "Rail_Transportation", "Retail_Trade", "State_Local", "Transit_Ground_Trans", "Truck_Trans", 
                                 "Utilities", "Warehousing_Storage", "Water_Trans", "Wholesale_Trade", "GDP_Total"))
       ),
@@ -68,11 +67,11 @@ fluidPage(
       )
     ),
     
-    # show plots in tabs
+    # Show plots in tabs
     mainPanel(
       tabsetPanel(id = "tabs",  # Assign an id to the tabsetPanel for reference in conditionalPanel
                   
-                  # first tab: both dist and scatter for Economic Indicators
+                  # First tab: both dist and scatter for Economic Indicators
                   tabPanel(
                     "Economic Indicator Comparison", 
                     fluidRow(
@@ -87,7 +86,7 @@ fluidPage(
                              ))  # scatter plot with border wrapped in div
                     ),
                     
-                    # table below scatter
+                    # Table below scatter
                     fluidRow(
                       column(width = 12,
                              tags$strong("Underlying Scatter Plot Data"),
@@ -111,7 +110,7 @@ fluidPage(
                              ))  # scatter plot with border wrapped in div
                     ),
                     
-                    # table below scatter
+                    # Table below scatter
                     fluidRow(
                       column(width = 12,
                              tags$strong("Underlying Scatter Plot Data"),
@@ -133,6 +132,7 @@ fluidPage(
     )
   )
 )
+
 
 
 

@@ -50,10 +50,10 @@ function(input, output, session) {
       scale_x_continuous(breaks = seq(0, max(plot_data()$`Total Rev`, na.rm = TRUE), by = 2500))  # Adjust x-tick interval
   })
   
-  # GDP Sector Tab: New Table with Total_Rev, Total_Rev_Offset1, and Total_Rev_Offset2
-  output$AggregatedDataTableGDP <- DT::renderDataTable({
-    
-    # first aggregation: qtr_rev_agg_0
+  
+  # GDP Sector: Data for the table and scatter plot
+  merged_data_gdp <- reactive({
+    # First aggregation: qtr_rev_agg_0
     qtr_rev_agg_0 <- plot_data() %>%
       group_by(`Year-Qtr`) %>%
       summarize(
@@ -61,15 +61,15 @@ function(input, output, session) {
         .groups = "drop"
       )
     
-    # ensure data types are the same for merging
+    # Ensure data types are the same for merging
     gdp$`Year-Qtr` <- as.character(gdp$`Year-Qtr`)
     qtr_rev_agg_0$`Year-Qtr` <- as.character(qtr_rev_agg_0$`Year-Qtr`)
     
-    # merge 1: qtr_rev_agg_0 and gdp by Year-Qtr
+    # Merge 1: qtr_rev_agg_0 and gdp by Year-Qtr
     merged_data_gdp <- gdp %>%
       inner_join(qtr_rev_agg_0, by = "Year-Qtr")
     
-    # second aggregation: qtr_rev_agg_1 (grouped by Year-Qtr_Offset1)
+    # Second aggregation: qtr_rev_agg_1 (grouped by Year-Qtr_Offset1)
     qtr_rev_agg_1 <- plot_data() %>%
       group_by(`Year-Qtr_Offset1`) %>%
       summarize(
@@ -78,15 +78,15 @@ function(input, output, session) {
       ) %>%
       rename(Total_Rev_Offset1 = Total_Rev)
     
-    # ensure data types are the same for merging
+    # Ensure data types are the same for merging
     merged_data_gdp$`Year-Qtr_Offset1` <- as.character(merged_data_gdp$`Year-Qtr_Offset1`)
     qtr_rev_agg_1$`Year-Qtr_Offset1` <- as.character(qtr_rev_agg_1$`Year-Qtr_Offset1`)
     
-    # merge 2: qtr_rev_agg_1 and merged_data_gdp by Year-Qtr_Offset1
+    # Merge 2: qtr_rev_agg_1 and merged_data_gdp by Year-Qtr_Offset1
     merged_data_gdp <- merged_data_gdp %>%
       inner_join(qtr_rev_agg_1, by = "Year-Qtr_Offset1")
     
-    # third aggregation: qtr_rev_agg_2 (grouped by Year-Qtr_Offset2)
+    # Third aggregation: qtr_rev_agg_2 (grouped by Year-Qtr_Offset2)
     qtr_rev_agg_2 <- plot_data() %>%
       group_by(`Year-Qtr_Offset2`) %>%
       summarize(
@@ -95,16 +95,42 @@ function(input, output, session) {
       ) %>%
       rename(Total_Rev_Offset2 = Total_Rev)
     
-    # ensure data types are the same for merging
+    # Ensure data types are the same for merging
     merged_data_gdp$`Year-Qtr_Offset2` <- as.character(merged_data_gdp$`Year-Qtr_Offset2`)
     qtr_rev_agg_2$`Year-Qtr_Offset2` <- as.character(qtr_rev_agg_2$`Year-Qtr_Offset2`)
     
-    # merge 3: qtr_rev_agg_2 and merged_data_gdp by Year-Qtr_Offset2
+    # Merge 3: qtr_rev_agg_2 and merged_data_gdp by Year-Qtr_Offset2
     merged_data_gdp <- merged_data_gdp %>%
       inner_join(qtr_rev_agg_2, by = "Year-Qtr_Offset2")
     
-    # display the resulting merged data table for the third merge
-    DT::datatable(merged_data_gdp, options = list(pageLength = 10))
+    return(merged_data_gdp)
+  })
+  
+  # GDP Sector Tab: Scatter Plot (using merged_data_gdp)
+  output$scatterPlotGDP <- renderPlot({
+    # Ensure merged data is available
+    merged_data <- merged_data_gdp()
+    
+    # Get selected variables for X and Y axes
+    x_var <- input$scatter_x_var_gdp
+    y_var <- input$scatter_y_var_gdp
+    
+    # Plot the selected X and Y axis variables
+    ggplot(merged_data, aes_string(x = x_var, y = y_var)) +
+      geom_point(color = "darkblue") +
+      labs(
+        title = glue("{x_var} vs {y_var}"),
+        x = x_var,
+        y = y_var
+      ) +
+      theme_minimal() +
+      geom_smooth(method = lm) +
+      theme(plot.title = element_text(face = "bold"))
+  })
+  
+  # GDP Sector Tab: Table with merged data
+  output$AggregatedDataTableGDP <- DT::renderDataTable({
+    DT::datatable(merged_data_gdp(), options = list(pageLength = 10))
   })
 
   # Economic Indicator Tab: Distribution of Total Rev (Filtered by Percentile Range)
