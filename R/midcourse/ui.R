@@ -30,19 +30,40 @@ fluidPage(
                   step = 1, 
                   animate = TRUE),
       
-      # Conditional dropdown for x-axis var in scatter plot
+      # Conditional dropdown for x-axis var in scatter plot for Economic Indicator Comparison tab
       conditionalPanel(
-        condition = "input.tabs == 'Economic Indicator Comparison'",  # check if Economic Indicator Comparison tab is active
+        condition = "input.tabs == 'Economic Indicator Comparison'",  # Show on Economic Indicator tab
         selectInput("scatter_x_var", 
                     label = "Select Variable for X-Axis", 
                     choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment"))
       ),
       
-      # Conditional dropdown for Y-axis variable in scatter plot
+      # Conditional dropdown for Y-axis variable in scatter plot for Economic Indicator Comparison tab
       conditionalPanel(
-        condition = "input.tabs == 'Economic Indicator Comparison'",  # check if Economic Indicator Comparison tab is active
+        condition = "input.tabs == 'Economic Indicator Comparison'",  # Show on Economic Indicator tab
         selectInput("scatter_y_var", 
                     label = "Select Variable for Y-Axis", 
+                    choices = c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2"))
+      ),
+      
+      # Conditional dropdown for x-axis var in scatter plot for GDP Sector Comparison tab
+      conditionalPanel(
+        condition = "input.tabs == 'GDP Sector Comparison'",  # Show on GDP tab
+        selectInput("scatter_x_var_gdp", 
+                    label = "Select Variable for X-Axis (GDP)", 
+                    choices = c("Accommodation_Food_Services", "Agriculture_FFH", "Air_Trans", "Arts_Entertainment_Rec", 
+                                "Construction", "Educational_Health_Social", "Federal", "Finance_Ins_RealEstate", 
+                                "Information", "Manufacturing", "Mining", "Other_Services_Not_Government", 
+                                "Other_Trans_Support_ Activity", "Pipeline_Transportation", "Professional_ Business_Services", 
+                                "Rail_Transportation", "Retail_Trade", "State_Local", "Transit_Ground_Trans", "Truck_Trans", 
+                                "Utilities", "Warehousing_Storage", "Water_Trans", "Wholesale_Trade", "GDP_Total"))
+      ),
+      
+      # Conditional dropdown for Y-axis variable in scatter plot for GDP Sector Comparison tab
+      conditionalPanel(
+        condition = "input.tabs == 'GDP Sector Comparison'",  # Show on GDP tab
+        selectInput("scatter_y_var_gdp", 
+                    label = "Select Variable for Y-Axis (GDP)", 
                     choices = c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2"))
       )
     ),
@@ -51,7 +72,7 @@ fluidPage(
     mainPanel(
       tabsetPanel(id = "tabs",  # Assign an id to the tabsetPanel for reference in conditionalPanel
                   
-                  # first tab: both dist and scatter
+                  # first tab: both dist and scatter for Economic Indicators
                   tabPanel(
                     "Economic Indicator Comparison", 
                     fluidRow(
@@ -81,6 +102,21 @@ fluidPage(
                     fluidRow(
                       column(width = 12,
                              div(class = "plot-container", plotOutput("distPlotGDP")))  # Same histogram here
+                    ),
+                    fluidRow(
+                      column(width = 12,
+                             div(
+                               style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
+                               plotOutput("scatterPlotGDP", height = "300px")
+                             ))  # scatter plot with border wrapped in div
+                    ),
+                    
+                    # table below scatter
+                    fluidRow(
+                      column(width = 12,
+                             tags$strong("Underlying Scatter Plot Data"),
+                             DT::dataTableOutput("AggregatedDataTableGDP") 
+                      )
                     )
                   ),
                   
@@ -97,6 +133,7 @@ fluidPage(
     )
   )
 )
+
 
 
 
