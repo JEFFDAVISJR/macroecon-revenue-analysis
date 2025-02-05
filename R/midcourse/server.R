@@ -130,9 +130,15 @@ function(input, output, session) {
   
   # GDP Sector Tab: Table with merged data
   output$AggregatedDataTableGDP <- DT::renderDataTable({
-    DT::datatable(merged_data_gdp(), options = list(pageLength = 10))
+    DT::datatable(
+      merged_data_gdp(), 
+      options = list(
+        pageLength = 10,
+        scrollX = TRUE   #horizontal scrolling
+      ),
+      width = "100%"
+    )
   })
-
   # Economic Indicator Tab: Distribution of Total Rev (Filtered by Percentile Range)
   output$distPlot <- renderPlot({
     title <- glue("Distribution of {input$S_Cons_Order_Class} within Sales Percentile Range: {input$slider2[1]}% - {input$slider2[2]}%")
