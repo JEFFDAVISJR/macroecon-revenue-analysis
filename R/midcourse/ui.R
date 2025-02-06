@@ -14,7 +14,7 @@ fluidPage(
   titlePanel("Revenue and Economic Indicators"),
   
   sidebarLayout(
-    sidebarPanel(
+    sidebarPanel(width= 4,
       # Select an order class from the data or All
       radioButtons("S_Cons_Order_Class",
                    label = "Select an Order Class", 
@@ -144,6 +144,7 @@ fluidPage(
     )
   )
 )
+
 
 
 
