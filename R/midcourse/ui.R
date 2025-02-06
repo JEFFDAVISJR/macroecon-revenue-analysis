@@ -92,6 +92,14 @@ fluidPage(
                              tags$strong("Underlying Scatter Plot Data"),
                              DT::dataTableOutput("aggregatedDataTable") 
                       )
+                    ),
+                    
+                    # Add the output for the linear regression summary underneath the filters
+                    fluidRow(
+                      column(width = 12,
+                             tags$strong("Linear Regression Summary"),
+                             verbatimTextOutput("lmSummary")  # Display the regression summary
+                      )
                     )
                   ),
                   

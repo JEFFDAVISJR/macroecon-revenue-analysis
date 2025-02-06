@@ -186,13 +186,13 @@ function(input, output, session) {
     
     # Merge month_rev with non_gdp dataset using Year-Month as common key
     merged_data <- non_gdp %>%
-      left_join(month_rev, by = "Year-Month", suffix = c("", "_month_rev"))
-    
-    # Merge for Total_Rev_Offset1 and Total_Rev_Offset2
+      inner_join(month_rev, by = "Year-Month", suffix = c("_non_gdp", "_month_rev"))
     merged_data <- merged_data %>%
-      left_join(month_rev, by = c("Year-Month_Offset1" = "Year-Month"), suffix = c("", "_Offset1"))
+      inner_join(month_rev, by = c("Year-Month_Offset1" = "Year-Month"), suffix = c("", "_Offset1")) %>%
+      rename(Total_Rev_Offset1 = Total_Rev_Offset1)
     merged_data <- merged_data %>%
-      left_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2"))
+      inner_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2")) %>%
+      rename(Total_Rev_Offset2 = Total_Rev_Offset2)
     
     # Get selected variables for X and Y axes
     x_var <- input$scatter_x_var
@@ -217,11 +217,6 @@ function(input, output, session) {
       group_by(`Year-Month`) %>%
       summarize(Total_Rev = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
     
-    month_rev$`Year-Month` <- as.Date(paste0(month_rev$`Year-Month`, "-01"), format = "%Y-%b-%d")
-    non_gdp$`Year-Month` <- as.Date(paste0(non_gdp$`Year-Month`, "-01"), format = "%Y-%b-%d")
-    non_gdp$`Year-Month_Offset1` <- as.Date(paste0(non_gdp$`Year-Month_Offset1`, "-01"), format = "%Y-%b-%d")
-    non_gdp$`Year-Month_Offset2` <- as.Date(paste0(non_gdp$`Year-Month_Offset2`, "-01"), format = "%Y-%b-%d")
-    
     merged_data <- non_gdp %>%
       inner_join(month_rev, by = "Year-Month", suffix = c("_non_gdp", "_month_rev"))
     merged_data <- merged_data %>%
@@ -236,6 +231,72 @@ function(input, output, session) {
       options = list(pageLength = 10, scrollX = TRUE),  # Table options
       width = "100%"  # Set table width
     )
+  })
+  
+  # Economic Indicator Tab: Linear Regression Summary
+  output$lmSummary <- renderPrint({
+    req(input$scatter_x_var, input$scatter_y_var)  # Ensure both variables are selected
+    
+    # Get the selected variables for X and Y from the user input
+    x_var <- input$scatter_x_var
+    y_var <- input$scatter_y_var
+    
+    month_rev <- plot_data() %>%
+      group_by(`Year-Month`) %>%
+      summarize(Total_Rev = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
+    
+    month_rev$`Year-Month` <- as.Date(paste0(month_rev$`Year-Month`, "-01"), format = "%Y-%b-%d")
+    non_gdp$`Year-Month` <- as.Date(paste0(non_gdp$`Year-Month`, "-01"), format = "%Y-%b-%d")
+    non_gdp$`Year-Month_Offset1` <- as.Date(paste0(non_gdp$`Year-Month_Offset1`, "-01"), format = "%Y-%b-%d")
+    non_gdp$`Year-Month_Offset2` <- as.Date(paste0(non_gdp$`Year-Month_Offset2`, "-01"), format = "%Y-%b-%d")
+    
+    merged_data <- non_gdp %>%
+      inner_join(month_rev, by = "Year-Month", suffix = c("_non_gdp", "_month_rev"))
+    merged_data <- merged_data %>%
+      inner_join(month_rev, by = c("Year-Month_Offset1" = "Year-Month"), suffix = c("", "_Offset1")) %>%
+      rename(Total_Rev_Offset1 = Total_Rev_Offset1)
+    merged_data <- merged_data %>%
+      inner_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2")) %>%
+      rename(Total_Rev_Offset2 = Total_Rev_Offset2)
+    
+    # Get the merged data for the regression
+    merged_data_filtered <- merged_data_gdp()  # Get merged data, already combined with GDP and filtered
+    
+      # Build the linear model using merged data
+      lm_model <- lm(as.formula(paste(y_var, "~", x_var)), data = merged_data_filtered)
+      
+      # Return the summary of the regression model
+      summary(lm_model)
+  })
+  
+  # Economic Indicator Tab: Linear Regression Summary
+  output$lmSummary <- renderPrint({
+    req(input$scatter_x_var, input$scatter_y_var)  # Ensure both variables are selected
+    
+    # Get the selected variables for X and Y from the user input
+    x_var <- input$scatter_x_var
+    y_var <- input$scatter_y_var
+    
+    # Create month-level revenue summary
+    month_rev <- plot_data() %>%
+      group_by(`Year-Month`) %>%
+      summarize(Total_Rev = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
+    
+    # Merge the data for revenue and GDP offsets
+    merged_data <- non_gdp %>%
+      inner_join(month_rev, by = "Year-Month", suffix = c("_non_gdp", "_month_rev")) %>%
+      inner_join(month_rev, by = c("Year-Month_Offset1" = "Year-Month"), suffix = c("", "_Offset1")) %>%
+      rename(Total_Rev_Offset1 = Total_Rev_Offset1) %>%
+      inner_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2")) %>%
+      rename(Total_Rev_Offset2 = Total_Rev_Offset2)
+    
+    # Now, merged_data contains the necessary variables for regression
+    
+    # Build the linear model using the merged data
+    lm_model <- lm(as.formula(paste(y_var, "~", x_var)), data = merged_data)
+    
+    # Return the summary of the regression model
+    summary(lm_model)
   })
 }
 
