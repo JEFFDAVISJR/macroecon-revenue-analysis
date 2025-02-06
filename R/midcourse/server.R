@@ -44,16 +44,27 @@ function(input, output, session) {
     
     plot_data() %>%
       ggplot(aes(x = `Total Rev`)) +  
-      geom_histogram(bins = 50) +
+      geom_histogram(bins = 50, fill = "#4C9F70", color = "white", alpha = 0.7) +  # Color with border
       ggtitle(title) +
-      theme(plot.title = element_text(face = "bold")) +  # Make title bold
-      scale_x_continuous(breaks = seq(0, max(plot_data()$`Total Rev`, na.rm = TRUE), by = 2500))  # Adjust x-tick interval
+      theme_minimal(base_size = 15) +  # Clean theme
+      theme(
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 16, color = "#333333"),
+        axis.title.x = element_text(size = 14, color = "#333333"),
+        axis.title.y = element_text(size = 14, color = "#333333"),
+        axis.text.x = element_text(size = 12, color = "#333333"),
+        axis.text.y = element_text(size = 12, color = "#333333"),
+        panel.grid.major = element_line(color = "#eeeeee"),  # Lighter grid lines
+        panel.grid.minor = element_blank()  # No minor grid lines
+      ) + 
+      scale_x_continuous(
+        labels = scales::comma  # Format x-axis numbers with commas for better readability
+      ) +
+      scale_y_continuous(labels = scales::comma)  # Format y-axis numbers with commas
   })
   
-  
-  # GDP Sector: Data for the table and scatter plot
+  # GDP Sector: Data for the table and scatter plot (Merged Data)
   merged_data_gdp <- reactive({
-    # First aggregation: qtr_rev_agg_0
+    # Same aggregation steps as before
     qtr_rev_agg_0 <- plot_data() %>%
       group_by(`Year-Qtr`) %>%
       summarize(
@@ -61,15 +72,13 @@ function(input, output, session) {
         .groups = "drop"
       )
     
-    # Ensure data types are the same for merging
     gdp$`Year-Qtr` <- as.character(gdp$`Year-Qtr`)
     qtr_rev_agg_0$`Year-Qtr` <- as.character(qtr_rev_agg_0$`Year-Qtr`)
     
-    # Merge 1: qtr_rev_agg_0 and gdp by Year-Qtr
     merged_data_gdp <- gdp %>%
       inner_join(qtr_rev_agg_0, by = "Year-Qtr")
     
-    # Second aggregation: qtr_rev_agg_1 (grouped by Year-Qtr_Offset1)
+    # Second aggregation step (qtr_rev_agg_1) for merged data
     qtr_rev_agg_1 <- plot_data() %>%
       group_by(`Year-Qtr_Offset1`) %>%
       summarize(
@@ -78,15 +87,13 @@ function(input, output, session) {
       ) %>%
       rename(Total_Rev_Offset1 = Total_Rev)
     
-    # Ensure data types are the same for merging
     merged_data_gdp$`Year-Qtr_Offset1` <- as.character(merged_data_gdp$`Year-Qtr_Offset1`)
     qtr_rev_agg_1$`Year-Qtr_Offset1` <- as.character(qtr_rev_agg_1$`Year-Qtr_Offset1`)
     
-    # Merge 2: qtr_rev_agg_1 and merged_data_gdp by Year-Qtr_Offset1
     merged_data_gdp <- merged_data_gdp %>%
       inner_join(qtr_rev_agg_1, by = "Year-Qtr_Offset1")
     
-    # Third aggregation: qtr_rev_agg_2 (grouped by Year-Qtr_Offset2)
+    # Third aggregation step (qtr_rev_agg_2) for merged data
     qtr_rev_agg_2 <- plot_data() %>%
       group_by(`Year-Qtr_Offset2`) %>%
       summarize(
@@ -95,11 +102,9 @@ function(input, output, session) {
       ) %>%
       rename(Total_Rev_Offset2 = Total_Rev)
     
-    # Ensure data types are the same for merging
     merged_data_gdp$`Year-Qtr_Offset2` <- as.character(merged_data_gdp$`Year-Qtr_Offset2`)
     qtr_rev_agg_2$`Year-Qtr_Offset2` <- as.character(qtr_rev_agg_2$`Year-Qtr_Offset2`)
     
-    # Merge 3: qtr_rev_agg_2 and merged_data_gdp by Year-Qtr_Offset2
     merged_data_gdp <- merged_data_gdp %>%
       inner_join(qtr_rev_agg_2, by = "Year-Qtr_Offset2")
     
@@ -124,7 +129,7 @@ function(input, output, session) {
         y = y_var
       ) +
       theme_minimal() +
-      geom_smooth(method = lm) +
+      geom_smooth(method = lm, color = "forestgreen") +
       theme(plot.title = element_text(face = "bold"))
   })
   
@@ -134,21 +139,50 @@ function(input, output, session) {
       merged_data_gdp(), 
       options = list(
         pageLength = 10,
-        scrollX = TRUE   #horizontal scrolling
+        scrollX = TRUE   # Horizontal scrolling
       ),
       width = "100%"
     )
   })
+  
+  # GDP Tab: Linear Regression Summary
+  
+  output$lmSummaryGDP <- renderPrint({
+    req(input$scatter_x_var_gdp, input$scatter_y_var_gdp)  # Ensure both variables are selected
+    
+    # Get merged data (this will trigger the reactive block to compute it)
+    merged_data_gdp <- merged_data_gdp()
+    
+    # Build the linear model using the merged data
+    lm_model_gdp <- lm(as.formula(paste(input$scatter_y_var_gdp, "~", input$scatter_x_var_gdp)), data = merged_data_gdp)
+    
+    # Return the summary of the regression model
+    summary(lm_model_gdp)
+  })
+  
   # Economic Indicator Tab: Distribution of Total Rev (Filtered by Percentile Range)
   output$distPlot <- renderPlot({
     title <- glue("Distribution of {input$S_Cons_Order_Class} within Sales Percentile Range: {input$slider2[1]}% - {input$slider2[2]}%")
     
     plot_data() %>%
       ggplot(aes(x = `Total Rev`)) +  
-      geom_histogram(bins = 50) +
+      geom_histogram(bins = 50, fill = "#4682B4", color = "white", alpha = 0.7) +  # Color with border
       ggtitle(title) +
-      theme(plot.title = element_text(face = "bold")) +  # Make title bold
-      scale_x_continuous(breaks = seq(0, max(plot_data()$`Total Rev`, na.rm = TRUE), by = 2500))  # Adjust x-tick interval
+      theme_minimal(base_size = 15) +  # Clean theme
+      theme(
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 16, color = "#333333"),
+        axis.title.x = element_text(size = 14, color = "#333333"),
+        axis.title.y = element_text(size = 14, color = "#333333"),
+        axis.text.x = element_text(size = 12, color = "#333333"),
+        axis.text.y = element_text(size = 12, color = "#333333"),
+        panel.grid.major = element_line(color = "#eeeeee"),  # Lighter grid lines
+        panel.grid.minor = element_blank()  # No minor grid lines
+      ) + 
+      scale_x_continuous(
+        #breaks = seq(0, max(plot_data()$`Total Rev`, na.rm = TRUE), by = 2500),
+        labels = scales::comma  # Format x-axis numbers with commas for better readability
+      ) +
+      scale_y_continuous(labels = scales::comma)  # Format y-axis numbers with commas
   })
   
   # Economic Indicator Tab: Line Plot of Total Rev by Month (Grouped by Year)
@@ -232,43 +266,7 @@ function(input, output, session) {
       width = "100%"  # Set table width
     )
   })
-  
-  # Economic Indicator Tab: Linear Regression Summary
-  output$lmSummary <- renderPrint({
-    req(input$scatter_x_var, input$scatter_y_var)  # Ensure both variables are selected
-    
-    # Get the selected variables for X and Y from the user input
-    x_var <- input$scatter_x_var
-    y_var <- input$scatter_y_var
-    
-    month_rev <- plot_data() %>%
-      group_by(`Year-Month`) %>%
-      summarize(Total_Rev = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
-    
-    month_rev$`Year-Month` <- as.Date(paste0(month_rev$`Year-Month`, "-01"), format = "%Y-%b-%d")
-    non_gdp$`Year-Month` <- as.Date(paste0(non_gdp$`Year-Month`, "-01"), format = "%Y-%b-%d")
-    non_gdp$`Year-Month_Offset1` <- as.Date(paste0(non_gdp$`Year-Month_Offset1`, "-01"), format = "%Y-%b-%d")
-    non_gdp$`Year-Month_Offset2` <- as.Date(paste0(non_gdp$`Year-Month_Offset2`, "-01"), format = "%Y-%b-%d")
-    
-    merged_data <- non_gdp %>%
-      inner_join(month_rev, by = "Year-Month", suffix = c("_non_gdp", "_month_rev"))
-    merged_data <- merged_data %>%
-      inner_join(month_rev, by = c("Year-Month_Offset1" = "Year-Month"), suffix = c("", "_Offset1")) %>%
-      rename(Total_Rev_Offset1 = Total_Rev_Offset1)
-    merged_data <- merged_data %>%
-      inner_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2")) %>%
-      rename(Total_Rev_Offset2 = Total_Rev_Offset2)
-    
-    # Get the merged data for the regression
-    merged_data_filtered <- merged_data_gdp()  # Get merged data, already combined with GDP and filtered
-    
-      # Build the linear model using merged data
-      lm_model <- lm(as.formula(paste(y_var, "~", x_var)), data = merged_data_filtered)
-      
-      # Return the summary of the regression model
-      summary(lm_model)
-  })
-  
+
   # Economic Indicator Tab: Linear Regression Summary
   output$lmSummary <- renderPrint({
     req(input$scatter_x_var, input$scatter_y_var)  # Ensure both variables are selected
@@ -289,8 +287,6 @@ function(input, output, session) {
       rename(Total_Rev_Offset1 = Total_Rev_Offset1) %>%
       inner_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2")) %>%
       rename(Total_Rev_Offset2 = Total_Rev_Offset2)
-    
-    # Now, merged_data contains the necessary variables for regression
     
     # Build the linear model using the merged data
     lm_model <- lm(as.formula(paste(y_var, "~", x_var)), data = merged_data)
