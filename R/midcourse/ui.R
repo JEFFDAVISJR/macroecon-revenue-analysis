@@ -64,7 +64,19 @@ fluidPage(
         selectInput("scatter_y_var_gdp", 
                     label = "Select Variable for Y-Axis (GDP)", 
                     choices = c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2"))
+      ),
+      
+      # Add the output for the linear regression summary underneath the filters
+      conditionalPanel(
+        condition = "input.tabs == 'Economic Indicator Comparison'",  # Only show in Economic Indicator Comparison tab
+        fluidRow(
+          column(width = 12,
+                 tags$strong("Linear Regression Summary"),
+                 verbatimTextOutput("lmSummary")  # Display the regression summary
+          )
+        )
       )
+      
     ),
     
     # Show plots in tabs
@@ -91,14 +103,6 @@ fluidPage(
                       column(width = 12,
                              tags$strong("Underlying Scatter Plot Data"),
                              DT::dataTableOutput("aggregatedDataTable") 
-                      )
-                    ),
-                    
-                    # Add the output for the linear regression summary underneath the filters
-                    fluidRow(
-                      column(width = 12,
-                             tags$strong("Linear Regression Summary"),
-                             verbatimTextOutput("lmSummary")  # Display the regression summary
                       )
                     )
                   ),
@@ -140,6 +144,7 @@ fluidPage(
     )
   )
 )
+
 
 
 
