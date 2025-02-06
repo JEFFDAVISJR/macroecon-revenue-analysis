@@ -9,8 +9,9 @@
 
 fluidPage(
   
-  # App title
-  titlePanel("Revenue and Economic Indicators"),
+  titlePanel(
+    HTML('<span style="font-size: 30px; font-weight: bold; color: white; background: linear-gradient(90deg, #2196F3, #4CAF50); padding: 10px; border-radius: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">Impact of Economic Indicators & Revenue</span>')
+  ),
   
   sidebarLayout(
     sidebarPanel(width = 4,
