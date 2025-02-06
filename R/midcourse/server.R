@@ -231,11 +231,13 @@ function(input, output, session) {
       inner_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2")) %>%
       rename(Total_Rev_Offset2 = Total_Rev_Offset2)
     
-    DT::datatable(merged_data, options = list(pageLength = 10))
+    DT::datatable(
+      merged_data,  # The merged data to be displayed
+      options = list(pageLength = 10, scrollX = TRUE),  # Table options
+      width = "100%"  # Set table width
+    )
   })
 }
-
-
 
 
 
