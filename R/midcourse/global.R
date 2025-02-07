@@ -3,7 +3,7 @@ library(tidyverse)
 library(glue)
 library(DT)
 
-sales <- read_csv("./data/read_summarized_sales_clean.csv")
+sales <- read_csv("./data/read_summarized_sales_clean_new.csv")
 sales <- sales %>%
   mutate(Sales_Percentile = ntile(`Total Rev`, 100))
 gdp <- read_csv("./data/read_gdp_sector_pivot_clean.csv")

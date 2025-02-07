@@ -78,7 +78,7 @@ function(input, output, session) {
     merged_data_gdp <- gdp %>%
       inner_join(qtr_rev_agg_0, by = "Year-Qtr")
     
-    # Second aggregation step (qtr_rev_agg_1) for merged data
+    # Second aggregation(qtr_rev_agg_1)
     qtr_rev_agg_1 <- plot_data() %>%
       group_by(`Year-Qtr_Offset1`) %>%
       summarize(

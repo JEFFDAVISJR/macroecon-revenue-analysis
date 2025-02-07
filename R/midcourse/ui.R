@@ -10,7 +10,12 @@
 fluidPage(
   
   titlePanel(
-    HTML('<span style="font-size: 30px; font-weight: bold; color: white; background: linear-gradient(90deg, #2196F3, #4CAF50); padding: 10px; border-radius: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">Impact of Economic Indicators & Revenue</span>')
+    HTML('<span style="font-size: 24px; 
+         font-weight: bold; 
+         color: white; background: 
+         linear-gradient(90deg, #2196F3, #4CAF50); 
+         padding: 8px 12px; 
+         border-radius: 4px;">Economic Indicators & Revenue</span>')
   ),
   
   sidebarLayout(
