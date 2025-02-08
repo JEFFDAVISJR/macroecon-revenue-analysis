@@ -295,91 +295,89 @@ function(input, output, session) {
     summary(lm_model)
   })
   
-# ARIMA Tab: Arima Model Results_Plot
-output$arimaPlot <- renderPlot({
-  req(input$scatter_x_var, input$scatter_y_var)  # Ensure both variables are selected
-  
-  # Get the selected variables for X and Y from the user input
-  x_var <- input$scatter_x_var
-  y_var <- input$scatter_y_var
-  
-  # Create qtr-level revenue summary
-  qtr_rev_arima <- plot_data() |> 
-    group_by(`Year-Qtr`) |> 
-    summarize(
-      Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
-      .groups = "drop"
-    ) 
-  
-  gdp_qtr_rev <- gdp |> 
-    inner_join(qtr_rev_arima, by = "Year-Qtr")
-  
-  cutoff_year = 2023
-  
-  # Use data before the cutoff year to fit the model
-  model_tib_gdp <- gdp_qtr_rev |> 
-    arrange(Year) |> 
-    filter(Year < cutoff_year)
-  
-  total_rev_ts <- ts(model_tib_gdp$Total_Rev, start = min(model_tib_gdp$Year), frequency = 4)
-  gdp_total_ts <- ts(model_tib_gdp$GDP_Total, start = min(model_tib_gdp$Year), frequency = 4)
-  
-  # Fit ARIMA model with GDP as an external regressor
-  gdp_sales_model <- auto.arima(
-    total_rev_ts, 
-    xreg = log(gdp_total_ts)
-  )
-  
-  future_GDP <- gdp_qtr_rev |> 
-    arrange(Year) |> 
-    filter(Year >= cutoff_year) |>
-    filter(Year < 2024) |> 
-    pull(GDP_Total)
-  
-  forecasted_values <- forecast(gdp_sales_model, 
-                                xreg = log(future_GDP)
-  )
-  
-  start_year <- 2023
-  years <- seq(start_year, start_year + length(future_GDP) / 4 - 1)
-  quarters <- rep(c("Q1", "Q2", "Q3", "Q4"), length.out = length(future_GDP))
-  Year_Qtr <- paste(rep(years, each = 4), quarters, sep = "-")
-  
-  forecast_tib_qtr <- tibble(
-    Year_Qtr,
-    Total_Rev_Exp_Pred = forecasted_values$mean,
-    Lower_80 = forecasted_values$lower[,1],
-    Upper_80 = forecasted_values$upper[,1],
-    Lower_95 = forecasted_values$lower[,2],
-    Upper_95 = forecasted_values$upper[,2]
-  )
-  
-  Year_Qtr_Float <- rep(years, each = 4) + match(quarters, c("Q1", "Q2", "Q3", "Q4")) / 4
-  
-  forecast_tib_qtr$`Year-Qtr-Float` <- Year_Qtr_Float
-  
-  forecast_tib_qtr <- forecast_tib_qtr |> 
-    mutate(`Year-Qtr-Float` = Year_Qtr_Float)
-  
-  ggplot() +
-    geom_line(data = gdp_qtr_rev |> 
-                filter(Year < 2024),
-              aes(x = `Year-Qtr-Float`, y = Total_Rev)
-    ) +
-    geom_line(data = forecast_tib_qtr, 
-              aes(x = Year_Qtr_Float, y = Total_Rev_Exp_Pred ), 
-              linetype = "dashed") +
-    geom_ribbon(data = forecast_tib_qtr, 
-                aes(x = Year_Qtr_Float, ymin = Lower_95, ymax = Upper_95), 
-                alpha = 0.5,
-                fill = "gray80") +
-    geom_ribbon(data = forecast_tib_qtr, 
-                aes(x = Year_Qtr_Float, ymin = Lower_80, ymax = Upper_80),
-                alpha = 0.5,
-                fill = "gray70") +
-    scale_y_continuous(labels = label_number(big.mark = ","))
-  
-})
+  # ARIMA Tab: Arima Model Results_Plot
+  output$arimaPlot <- renderPlot({
+    req(input$scatter_x_reg)  # Ensure both variables are selected
+    
+    # Get the selected variables for X and Y from the user input
+    x_var <- input$scatter_x_reg
+    
+    # Create qtr-level revenue summary
+    qtr_rev_arima <- plot_data() |> 
+      group_by(`Year-Qtr`) |> 
+      summarize(
+        Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
+        .groups = "drop"
+      ) 
+    
+    gdp_qtr_rev <- gdp |> 
+      inner_join(qtr_rev_arima, by = "Year-Qtr")
+    
+    cutoff_year = 2023
+    
+    # Use data before the cutoff year to fit the model
+    model_tib_gdp <- gdp_qtr_rev |> 
+      arrange(Year) |> 
+      filter(Year < cutoff_year)
+    
+    total_rev_ts <- ts(model_tib_gdp$Total_Rev, start = min(model_tib_gdp$Year), frequency = 4)
+    gdp_total_ts <- ts(model_tib_gdp[[input$scatter_x_reg]], start = min(model_tib_gdp$Year), frequency = 4)
+    
+    # Fit ARIMA model with GDP as an external regressor
+    gdp_sales_model <- auto.arima(
+      total_rev_ts, 
+      xreg = log(gdp_total_ts)
+    )
+    
+    future_GDP <- gdp_qtr_rev |> 
+      arrange(Year) |> 
+      filter(Year >= cutoff_year) |>
+      filter(Year < 2024) |> 
+      pull(input$scatter_x_reg) # Dynamic x
+    
+    forecasted_values <- forecast(gdp_sales_model, 
+                                  xreg = log(future_GDP)
+    )
+    
+    start_year <- 2023
+    years <- seq(start_year, start_year + length(future_GDP) / 4 - 1)
+    quarters <- rep(c("Q1", "Q2", "Q3", "Q4"), length.out = length(future_GDP))
+    Year_Qtr <- paste(rep(years, each = 4), quarters, sep = "-")
+    
+    forecast_tib_qtr <- tibble(
+      Year_Qtr,
+      Total_Rev_Exp_Pred = forecasted_values$mean,
+      Lower_80 = forecasted_values$lower[,1],
+      Upper_80 = forecasted_values$upper[,1],
+      Lower_95 = forecasted_values$lower[,2],
+      Upper_95 = forecasted_values$upper[,2]
+    )
+    
+    Year_Qtr_Float <- rep(years, each = 4) + match(quarters, c("Q1", "Q2", "Q3", "Q4")) / 4
+    
+    forecast_tib_qtr$`Year-Qtr-Float` <- Year_Qtr_Float
+    
+    forecast_tib_qtr <- forecast_tib_qtr |> 
+      mutate(`Year-Qtr-Float` = Year_Qtr_Float)
+    
+    ggplot() +
+      geom_line(data = gdp_qtr_rev |> 
+                  filter(Year < 2024),
+                aes(x = `Year-Qtr-Float`, y = Total_Rev)
+      ) +
+      geom_line(data = forecast_tib_qtr, 
+                aes(x = Year_Qtr_Float, y = Total_Rev_Exp_Pred ), 
+                linetype = "dashed") +
+      geom_ribbon(data = forecast_tib_qtr, 
+                  aes(x = Year_Qtr_Float, ymin = Lower_95, ymax = Upper_95), 
+                  alpha = 0.5,
+                  fill = "gray80") +
+      geom_ribbon(data = forecast_tib_qtr, 
+                  aes(x = Year_Qtr_Float, ymin = Lower_80, ymax = Upper_80),
+                  alpha = 0.5,
+                  fill = "gray70") +
+      scale_y_continuous(labels = label_number(big.mark = ","))
+  })
 }
 
 

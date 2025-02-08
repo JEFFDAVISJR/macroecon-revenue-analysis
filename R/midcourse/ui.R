@@ -66,7 +66,7 @@ fluidPage(
                  # Conditional dropdown for x-axis var in scatter plot for Arima tab
                  conditionalPanel(
                    condition = "input.tabs == 'Arima Model'",  # Show on Arima tab
-                   selectInput("scatter_x_var_gdp", 
+                   selectInput("scatter_x_reg", 
                                label = "Select Variable for X-Axis (GDP)", 
                                choices = c("Accommodation_Food_Services", "Agriculture_FFH", "Air_Trans", "Arts_Entertainment_Rec", 
                                            "Construction", "Educational_Health_Social", "Federal", "Finance_Ins_RealEstate", 
