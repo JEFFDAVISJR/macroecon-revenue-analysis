@@ -10,14 +10,17 @@ library(dplyr)
 
 sales <- read_csv("./data/read_summarized_sales_clean_new.csv")
 gdp_sectors <- read_csv("./data/read_gdp_sector_pivot_clean.csv")
+
 ```
 
 
 ```{r}
 
-#Use data before the cutoff year to fit the model
-cutoff_year = 2024
+sales <- sales %>% filter(`Year-Qtr` != '2024-Q4')
 
+```
+
+```{r}
 qtr_sales <- sales |> 
   group_by(`Year-Qtr`) |> 
   summarize(
@@ -28,13 +31,19 @@ qtr_sales <- sales |>
 sales_gdp <- gdp_sectors |> 
   inner_join(qtr_sales, by = "Year-Qtr")
 
-sales_gdp <- sales_gdp |> 
-  filter(Year < cutoff_year)
+```
+
+
+
+```{r}
+
+cutoff_year = 2022
+
+#Use data before the cutoff year to fit the model
 
 model_tib_gdp <- sales_gdp |> 
-  arrange(Year)
-
-model_tib_gdp
+  arrange(Year) |> 
+  filter(Year < cutoff_year)
 ```
 
 
@@ -49,8 +58,6 @@ We need to convert the variables to time series objects.
 ```{r}
 total_rev_ts <- ts(model_tib_gdp$Total_Rev, start = min(model_tib_gdp$Year), frequency = 4)
 gdp_total_ts <- ts(model_tib_gdp$GDP_Total, start = min(model_tib_gdp$Year), frequency = 4)
-
-
 
 #ts(model_tib_gdp$Total_Rev,start = min(model_tib_gdp$Year) frequency = 4, start = c(2021, 1))
 ```
@@ -85,17 +92,27 @@ Let's see how well it forecasts for future years. Because of the big dropoff in 
 
 future_GDP <- sales_gdp |> 
   arrange(Year) |> 
+  filter(Year >= cutoff_year) |>
+  filter(Year < 2024) |> 
   pull(GDP_Total)
 forecasted_values <- forecast(gdp_sales_model, 
                               xreg = log(future_GDP)
                               )
+         
 
+start_year <- 2022
 
-start_year <- 2021
 years <- seq(start_year, start_year + length(future_GDP) / 4 - 1)
+
 quarters <- rep(c("Q1", "Q2", "Q3", "Q4"), length.out = length(future_GDP))
+
 Year_Qtr <- paste(rep(years, each = 4), quarters, sep = "-")
-           
+         
+         
+print(future_GDP)
+print(Year_Qtr)
+         
+
 ```
 
 
@@ -135,7 +152,8 @@ forecast_tib_qtr
 
 ```{r}
 ggplot() +
-  geom_line(data = sales_gdp, 
+  geom_line(data = sales_gdp |> 
+            filter(Year < 2024),
             aes(x = `Year-Qtr-Float`, y = Total_Rev)
             ) +
   geom_line(data = forecast_tib_qtr, 
@@ -148,7 +166,7 @@ ggplot() +
   geom_ribbon(data = forecast_tib_qtr, 
               aes(x = Year_Qtr_Float, ymin = Lower_80, ymax = Upper_80),
               alpha = 0.5,
-              fill = "gray60")
+              fill = "gray70")
 
 ```
 
