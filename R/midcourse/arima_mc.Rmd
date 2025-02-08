@@ -1,0 +1,174 @@
+---
+title: "ARIMA Demo for MC"
+output: html_notebook
+---
+
+```{r}
+library(forecast)
+library(tidyverse)
+library(dplyr)
+
+sales <- read_csv("./data/read_summarized_sales_clean_new.csv")
+gdp_sectors <- read_csv("./data/read_gdp_sector_pivot_clean.csv")
+```
+
+
+```{r}
+
+#Use data before the cutoff year to fit the model
+cutoff_year = 2024
+
+qtr_sales <- sales |> 
+  group_by(`Year-Qtr`) |> 
+  summarize(
+    Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
+    .groups = "drop"
+  ) 
+
+sales_gdp <- gdp_sectors |> 
+  inner_join(qtr_sales, by = "Year-Qtr")
+
+sales_gdp <- sales_gdp |> 
+  filter(Year < cutoff_year)
+
+model_tib_gdp <- sales_gdp |> 
+  arrange(Year)
+
+model_tib_gdp
+```
+
+
+
+
+
+```{r}
+# model_tib_gdp <- sales_gdp
+```
+
+We need to convert the variables to time series objects.
+```{r}
+total_rev_ts <- ts(model_tib_gdp$Total_Rev, start = min(model_tib_gdp$Year), frequency = 4)
+gdp_total_ts <- ts(model_tib_gdp$GDP_Total, start = min(model_tib_gdp$Year), frequency = 4)
+
+
+
+#ts(model_tib_gdp$Total_Rev,start = min(model_tib_gdp$Year) frequency = 4, start = c(2021, 1))
+```
+
+Then, we can use the auto.arima function from the forecast library to fit an arima model.
+For the US, it uses one autoregressive term. This means that it is using the prior year's life expectancy as a predictor for this year's value.
+```{r}
+gdp_sales_model <- auto.arima(
+  total_rev_ts, 
+  xreg = log(gdp_total_ts)
+)
+
+summary(gdp_sales_model)
+```
+
+If we want to test for statistical significance, we can use the coeftest function from the lmtest library.
+```{r}
+library(lmtest)
+
+coeftest(gdp_sales_model)
+```
+
+Let's see how well it forecasts for future years. Because of the big dropoff in life expectancy for 2020, we'll only look at years before 2020.
+```{r}
+# future_GDP <- sales_gdp |> 
+#   pull(GDP_Total)
+# forecasted_values <- forecast(gdp_sales_model, 
+#                               xreg = log(future_GDP)
+#                               )
+
+
+
+future_GDP <- sales_gdp |> 
+  arrange(Year) |> 
+  pull(GDP_Total)
+forecasted_values <- forecast(gdp_sales_model, 
+                              xreg = log(future_GDP)
+                              )
+
+
+start_year <- 2021
+years <- seq(start_year, start_year + length(future_GDP) / 4 - 1)
+quarters <- rep(c("Q1", "Q2", "Q3", "Q4"), length.out = length(future_GDP))
+Year_Qtr <- paste(rep(years, each = 4), quarters, sep = "-")
+           
+```
+
+
+Let's plot the actual (solid line) vs. the forecasted (dashed line). This also includes the 80% and 95% confidence intervals for the forecasted values.
+```{r}
+forecast_tib_qtr <- tibble(
+  Year_Qtr,
+  Total_Rev_Exp_Pred = forecasted_values$mean,
+  Lower_80 = forecasted_values$lower[,1],
+  Upper_80 = forecasted_values$upper[,1],
+  Lower_95 = forecasted_values$lower[,2],
+  Upper_95 = forecasted_values$upper[,2]
+)
+
+
+
+
+Year_Qtr_Float <- rep(years, each = 4) + match(quarters, c("Q1", "Q2", "Q3", "Q4")) / 4
+
+forecast_tib_qtr$`Year-Qtr-Float` <- Year_Qtr_Float
+
+
+forecast_tib_qtr <- forecast_tib_qtr |> 
+  mutate(`Year-Qtr-Float` = Year_Qtr_Float)
+
+forecast_tib_qtr
+
+
+```
+
+```{r}
+
+
+forecast_tib_qtr
+
+```
+
+```{r}
+ggplot() +
+  geom_line(data = sales_gdp, 
+            aes(x = `Year-Qtr-Float`, y = Total_Rev)
+            ) +
+  geom_line(data = forecast_tib_qtr, 
+            aes(x = Year_Qtr_Float, y = Total_Rev_Exp_Pred ), 
+            linetype = "dashed") +
+  geom_ribbon(data = forecast_tib_qtr, 
+              aes(x = Year_Qtr_Float, ymin = Lower_95, ymax = Upper_95), 
+              alpha = 0.5,
+              fill = "gray80") +
+  geom_ribbon(data = forecast_tib_qtr, 
+              aes(x = Year_Qtr_Float, ymin = Lower_80, ymax = Upper_80),
+              alpha = 0.5,
+              fill = "gray60")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
