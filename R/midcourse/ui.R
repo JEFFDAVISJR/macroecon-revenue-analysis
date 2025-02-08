@@ -63,6 +63,19 @@ fluidPage(
                                            "Utilities", "Warehousing_Storage", "Water_Trans", "Wholesale_Trade", "GDP_Total"))
                  ),
                  
+                 # Conditional dropdown for x-axis var in scatter plot for Arima tab
+                 conditionalPanel(
+                   condition = "input.tabs == 'Arima Model'",  # Show on Arima tab
+                   selectInput("scatter_x_var_gdp", 
+                               label = "Select Variable for X-Axis (GDP)", 
+                               choices = c("Accommodation_Food_Services", "Agriculture_FFH", "Air_Trans", "Arts_Entertainment_Rec", 
+                                           "Construction", "Educational_Health_Social", "Federal", "Finance_Ins_RealEstate", 
+                                           "Information", "Manufacturing", "Mining", "Other_Services_Not_Government", 
+                                           "Other_Trans_Support_Activity", "Pipeline_Transportation", "Professional_Business_Services", 
+                                           "Rail_Transportation", "Retail_Trade", "State_Local", "Transit_Ground_Trans", "Truck_Trans", 
+                                           "Utilities", "Warehousing_Storage", "Water_Trans", "Wholesale_Trade", "GDP_Total"))
+                 ),
+                 
                  # Conditional dropdown for Y-axis variable in scatter plot for GDP Sector Comparison tab
                  conditionalPanel(
                    condition = "input.tabs == 'GDP Sector Comparison'",  # Show on GDP tab
@@ -91,7 +104,9 @@ fluidPage(
                             verbatimTextOutput("lmSummaryGDP")  # Display the regression summary for GDP
                      )
                    )
-                 )
+                 ),
+                 
+                 # Add more controls here if needed for "Arima Model" tab
     ),
     
     # Show plots in tabs
@@ -146,6 +161,23 @@ fluidPage(
                     )
                   ),
                   
+                  # Arima Model tab
+                  tabPanel(
+                    "Arima Model",
+                    fluidRow(
+                      column(width = 12,
+                             tags$strong("ARIMA Model Results"),
+                             plotOutput("arimaPlot")  # Placeholder for ARIMA plot
+                      )
+                    ),
+                    fluidRow(
+                      column(width = 12,
+                             tags$strong("ARIMA Model Summary"),
+                             verbatimTextOutput("arimaSummary")  # Placeholder for ARIMA summary output
+                      )
+                    )
+                  ),
+                  
                   # Second tab: 
                   tabPanel(
                     "Facet Grid",
@@ -159,6 +191,7 @@ fluidPage(
     )
   )
 )
+
 
 
 

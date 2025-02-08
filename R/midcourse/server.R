@@ -17,7 +17,7 @@ function(input, output, session) {
     
     # Filter based on Order Class selection
     if (input$S_Cons_Order_Class != "All Sales") {
-      plot_data <- plot_data %>%
+      plot_data <- plot_data |> 
         filter(S_Cons_Order_Class == input$S_Cons_Order_Class)
     }
     
@@ -30,7 +30,7 @@ function(input, output, session) {
     upper_cutoff <- quantile(plot_data$`Total Rev`, upper_percentile / 100, na.rm = TRUE)
     
     # Filter data based on the selected percentile range
-    plot_data <- plot_data %>%
+    plot_data <- plot_data |> 
       filter(`Total Rev` >= lower_cutoff & `Total Rev` <= upper_cutoff)
     
     return(plot_data)
@@ -42,7 +42,7 @@ function(input, output, session) {
     
     title <- glue("Distribution of {input$S_Cons_Order_Class} within Sales Percentile Range: {input$slider2[1]}% - {input$slider2[2]}%")
     
-    plot_data() %>%
+    plot_data() |> 
       ggplot(aes(x = `Total Rev`)) +  
       geom_histogram(bins = 50, fill = "#4C9F70", color = "white", alpha = 0.7) +  # Color with border
       ggtitle(title) +
@@ -57,16 +57,16 @@ function(input, output, session) {
         panel.grid.minor = element_blank()  # No minor grid lines
       ) + 
       scale_x_continuous(
-        labels = scales::comma  # Format x-axis numbers with commas for better readability
+        labels = scales::comma  # Format x-axis
       ) +
       scale_y_continuous(labels = scales::comma)  # Format y-axis numbers with commas
   })
   
   # GDP Sector: Data for the table and scatter plot (Merged Data)
   merged_data_gdp <- reactive({
-    # Same aggregation steps as before
-    qtr_rev_agg_0 <- plot_data() %>%
-      group_by(`Year-Qtr`) %>%
+    # agg
+    qtr_rev_agg_0 <- plot_data() |> 
+      group_by(`Year-Qtr`) |> 
       summarize(
         Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
         .groups = "drop"
@@ -75,12 +75,12 @@ function(input, output, session) {
     gdp$`Year-Qtr` <- as.character(gdp$`Year-Qtr`)
     qtr_rev_agg_0$`Year-Qtr` <- as.character(qtr_rev_agg_0$`Year-Qtr`)
     
-    merged_data_gdp <- gdp %>%
+    merged_data_gdp <- gdp |> 
       inner_join(qtr_rev_agg_0, by = "Year-Qtr")
     
     # Second aggregation(qtr_rev_agg_1)
-    qtr_rev_agg_1 <- plot_data() %>%
-      group_by(`Year-Qtr_Offset1`) %>%
+    qtr_rev_agg_1 <- plot_data() |> 
+      group_by(`Year-Qtr_Offset1`) |> 
       summarize(
         Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
         .groups = "drop"
@@ -90,22 +90,22 @@ function(input, output, session) {
     merged_data_gdp$`Year-Qtr_Offset1` <- as.character(merged_data_gdp$`Year-Qtr_Offset1`)
     qtr_rev_agg_1$`Year-Qtr_Offset1` <- as.character(qtr_rev_agg_1$`Year-Qtr_Offset1`)
     
-    merged_data_gdp <- merged_data_gdp %>%
+    merged_data_gdp <- merged_data_gdp |> 
       inner_join(qtr_rev_agg_1, by = "Year-Qtr_Offset1")
     
     # Third aggregation step (qtr_rev_agg_2) for merged data
-    qtr_rev_agg_2 <- plot_data() %>%
-      group_by(`Year-Qtr_Offset2`) %>%
+    qtr_rev_agg_2 <- plot_data() |> 
+      group_by(`Year-Qtr_Offset2`) |> 
       summarize(
         Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
         .groups = "drop"
-      ) %>%
+      ) |> 
       rename(Total_Rev_Offset2 = Total_Rev)
     
     merged_data_gdp$`Year-Qtr_Offset2` <- as.character(merged_data_gdp$`Year-Qtr_Offset2`)
     qtr_rev_agg_2$`Year-Qtr_Offset2` <- as.character(qtr_rev_agg_2$`Year-Qtr_Offset2`)
     
-    merged_data_gdp <- merged_data_gdp %>%
+    merged_data_gdp <- merged_data_gdp |> 
       inner_join(qtr_rev_agg_2, by = "Year-Qtr_Offset2")
     
     return(merged_data_gdp)
@@ -164,7 +164,7 @@ function(input, output, session) {
   output$distPlot <- renderPlot({
     title <- glue("Distribution of {input$S_Cons_Order_Class} within Sales Percentile Range: {input$slider2[1]}% - {input$slider2[2]}%")
     
-    plot_data() %>%
+    plot_data() |> 
       ggplot(aes(x = `Total Rev`)) +  
       geom_histogram(bins = 50, fill = "#4682B4", color = "white", alpha = 0.7) +  # Color with border
       ggtitle(title) +
@@ -190,7 +190,7 @@ function(input, output, session) {
     title <- glue("Line Plot of ({input$S_Cons_Order_Class}) by Month within Sales Percentile Range: {input$slider2[1]}% - {input$slider2[2]}%")
     
     # Group data by Year, Month, and Order Class
-    aggregated_data <- plot_data() %>%
+    aggregated_data <- plot_data() |> 
       group_by(Year, Month, S_Cons_Order_Class) %>%
       summarize(Total_Sales = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
     
@@ -214,17 +214,17 @@ function(input, output, session) {
   # Economic Indicator Tab: Scatter Plot with Dynamic X and Y-Axis Variables
   output$scatterPlot <- renderPlot({
     # Create month_rev from plot_data, filtered by Order Class and Percentile Range
-    month_rev <- plot_data() %>%
-      group_by(`Year-Month`) %>%
+    month_rev <- plot_data() |> 
+      group_by(`Year-Month`) |> 
       summarize(Total_Rev = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
     
     # Merge month_rev with non_gdp dataset using Year-Month as common key
-    merged_data <- non_gdp %>%
+    merged_data <- non_gdp |> 
       inner_join(month_rev, by = "Year-Month", suffix = c("_non_gdp", "_month_rev"))
-    merged_data <- merged_data %>%
+    merged_data <- merged_data |> 
       inner_join(month_rev, by = c("Year-Month_Offset1" = "Year-Month"), suffix = c("", "_Offset1")) %>%
       rename(Total_Rev_Offset1 = Total_Rev_Offset1)
-    merged_data <- merged_data %>%
+    merged_data <- merged_data |> 
       inner_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2")) %>%
       rename(Total_Rev_Offset2 = Total_Rev_Offset2)
     
@@ -247,16 +247,16 @@ function(input, output, session) {
   
   # Economic Indicator Tab: Underlying Data Table for Scatter Plot
   output$aggregatedDataTable <- DT::renderDataTable({
-    month_rev <- plot_data() %>%
-      group_by(`Year-Month`) %>%
+    month_rev <- plot_data() |> 
+      group_by(`Year-Month`) |> 
       summarize(Total_Rev = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
     
-    merged_data <- non_gdp %>%
+    merged_data <- non_gdp |> 
       inner_join(month_rev, by = "Year-Month", suffix = c("_non_gdp", "_month_rev"))
-    merged_data <- merged_data %>%
+    merged_data <- merged_data |> 
       inner_join(month_rev, by = c("Year-Month_Offset1" = "Year-Month"), suffix = c("", "_Offset1")) %>%
       rename(Total_Rev_Offset1 = Total_Rev_Offset1)
-    merged_data <- merged_data %>%
+    merged_data <- merged_data |> 
       inner_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2")) %>%
       rename(Total_Rev_Offset2 = Total_Rev_Offset2)
     
@@ -276,12 +276,12 @@ function(input, output, session) {
     y_var <- input$scatter_y_var
     
     # Create month-level revenue summary
-    month_rev <- plot_data() %>%
-      group_by(`Year-Month`) %>%
+    month_rev <- plot_data() |> 
+      group_by(`Year-Month`) |> 
       summarize(Total_Rev = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
     
     # Merge the data for revenue and GDP offsets
-    merged_data <- non_gdp %>%
+    merged_data <- non_gdp |> 
       inner_join(month_rev, by = "Year-Month", suffix = c("_non_gdp", "_month_rev")) %>%
       inner_join(month_rev, by = c("Year-Month_Offset1" = "Year-Month"), suffix = c("", "_Offset1")) %>%
       rename(Total_Rev_Offset1 = Total_Rev_Offset1) %>%
@@ -294,6 +294,92 @@ function(input, output, session) {
     # Return the summary of the regression model
     summary(lm_model)
   })
+  
+# ARIMA Tab: Arima Model Results_Plot
+output$arimaPlot <- renderPlot({
+  req(input$scatter_x_var, input$scatter_y_var)  # Ensure both variables are selected
+  
+  # Get the selected variables for X and Y from the user input
+  x_var <- input$scatter_x_var
+  y_var <- input$scatter_y_var
+  
+  # Create qtr-level revenue summary
+  qtr_rev_arima <- plot_data() |> 
+    group_by(`Year-Qtr`) |> 
+    summarize(
+      Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
+      .groups = "drop"
+    ) 
+  
+  gdp_qtr_rev <- gdp |> 
+    inner_join(qtr_rev_arima, by = "Year-Qtr")
+  
+  cutoff_year = 2023
+  
+  # Use data before the cutoff year to fit the model
+  model_tib_gdp <- gdp_qtr_rev |> 
+    arrange(Year) |> 
+    filter(Year < cutoff_year)
+  
+  total_rev_ts <- ts(model_tib_gdp$Total_Rev, start = min(model_tib_gdp$Year), frequency = 4)
+  gdp_total_ts <- ts(model_tib_gdp$GDP_Total, start = min(model_tib_gdp$Year), frequency = 4)
+  
+  # Fit ARIMA model with GDP as an external regressor
+  gdp_sales_model <- auto.arima(
+    total_rev_ts, 
+    xreg = log(gdp_total_ts)
+  )
+  
+  future_GDP <- gdp_qtr_rev |> 
+    arrange(Year) |> 
+    filter(Year >= cutoff_year) |>
+    filter(Year < 2024) |> 
+    pull(GDP_Total)
+  
+  forecasted_values <- forecast(gdp_sales_model, 
+                                xreg = log(future_GDP)
+  )
+  
+  start_year <- 2023
+  years <- seq(start_year, start_year + length(future_GDP) / 4 - 1)
+  quarters <- rep(c("Q1", "Q2", "Q3", "Q4"), length.out = length(future_GDP))
+  Year_Qtr <- paste(rep(years, each = 4), quarters, sep = "-")
+  
+  forecast_tib_qtr <- tibble(
+    Year_Qtr,
+    Total_Rev_Exp_Pred = forecasted_values$mean,
+    Lower_80 = forecasted_values$lower[,1],
+    Upper_80 = forecasted_values$upper[,1],
+    Lower_95 = forecasted_values$lower[,2],
+    Upper_95 = forecasted_values$upper[,2]
+  )
+  
+  Year_Qtr_Float <- rep(years, each = 4) + match(quarters, c("Q1", "Q2", "Q3", "Q4")) / 4
+  
+  forecast_tib_qtr$`Year-Qtr-Float` <- Year_Qtr_Float
+  
+  forecast_tib_qtr <- forecast_tib_qtr |> 
+    mutate(`Year-Qtr-Float` = Year_Qtr_Float)
+  
+  ggplot() +
+    geom_line(data = gdp_qtr_rev |> 
+                filter(Year < 2024),
+              aes(x = `Year-Qtr-Float`, y = Total_Rev)
+    ) +
+    geom_line(data = forecast_tib_qtr, 
+              aes(x = Year_Qtr_Float, y = Total_Rev_Exp_Pred ), 
+              linetype = "dashed") +
+    geom_ribbon(data = forecast_tib_qtr, 
+                aes(x = Year_Qtr_Float, ymin = Lower_95, ymax = Upper_95), 
+                alpha = 0.5,
+                fill = "gray80") +
+    geom_ribbon(data = forecast_tib_qtr, 
+                aes(x = Year_Qtr_Float, ymin = Lower_80, ymax = Upper_80),
+                alpha = 0.5,
+                fill = "gray70") +
+    scale_y_continuous(labels = label_number(big.mark = ","))
+  
+})
 }
 
 
