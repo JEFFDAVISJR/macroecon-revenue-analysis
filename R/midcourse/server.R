@@ -377,6 +377,45 @@ function(input, output, session) {
                   alpha = 0.5,
                   fill = "gray70") +
       scale_y_continuous(labels = label_number(big.mark = ","))
+    
+  })
+  
+  # Display ARIMA Model Summary below the plot
+  output$arimaSummary <- renderPrint({
+    req(input$scatter_x_reg)  # Ensure both variables are selected
+    
+    # Get the selected variables for X and Y from the user input
+    x_var <- input$scatter_x_reg
+    
+    # Create qtr-level revenue summary
+    qtr_rev_arima <- plot_data() |> 
+      group_by(`Year-Qtr`) |> 
+      summarize(
+        Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
+        .groups = "drop"
+      ) 
+    
+    gdp_qtr_rev <- gdp |> 
+      inner_join(qtr_rev_arima, by = "Year-Qtr")
+    
+    cutoff_year = 2023
+    
+    # Use data before the cutoff year to fit the model
+    model_tib_gdp <- gdp_qtr_rev |> 
+      arrange(Year) |> 
+      filter(Year < cutoff_year)
+    
+    total_rev_ts <- ts(model_tib_gdp$Total_Rev, start = min(model_tib_gdp$Year), frequency = 4)
+    gdp_total_ts <- ts(model_tib_gdp[[input$scatter_x_reg]], start = min(model_tib_gdp$Year), frequency = 4)
+    
+    # Fit ARIMA model with GDP as an external regressor
+    gdp_sales_model <- auto.arima(
+      total_rev_ts, 
+      xreg = log(gdp_total_ts)
+    )
+    
+    # Return ARIMA model summary
+    coeftest(gdp_sales_model)
   })
 }
 

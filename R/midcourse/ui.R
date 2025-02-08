@@ -84,7 +84,7 @@ fluidPage(
                                choices = c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2"))
                  ),
                  
-                 # puy lm summ underneath the filters for Economic Indicator tab
+                 # put lm summ underneath the filters for Economic Indicator tab
                  conditionalPanel(
                    condition = "input.tabs == 'Economic Indicator Comparison'",  # Only show in Economic Indicator Comparison tab
                    fluidRow(
@@ -106,7 +106,7 @@ fluidPage(
                    )
                  ),
                  
-                 # Add more controls here if needed for "Arima Model" tab
+                 # Add more controls later "Arima Model" tab
     ),
     
     # Show plots in tabs
@@ -191,6 +191,7 @@ fluidPage(
     )
   )
 )
+
 
 
 
