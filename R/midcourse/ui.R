@@ -106,6 +106,17 @@ fluidPage(
                    )
                  ),
                  
+                 # ARIMA Summary output in sidebar
+                 conditionalPanel(
+                   condition = "input.tabs == 'Arima Model'",  # Only show in ARIMA tab
+                   fluidRow(
+                     column(width = 12,
+                            tags$strong("ARIMA Model Summary"),
+                            verbatimTextOutput("arimaSummary")  # Display the ARIMA model summary in the sidebar
+                     )
+                   )
+                 ),
+                 
                  # Add more controls later "Arima Model" tab
     ),
     
@@ -172,10 +183,12 @@ fluidPage(
                     ),
                     fluidRow(
                       column(width = 12,
-                             tags$strong("ARIMA Model Summary"),
-                             verbatimTextOutput("arimaSummary")  # Placeholder for ARIMA summary output
+                             tags$strong("ARIMA Model Underlying Data"),
+                             DT::dataTableOutput("AggregatedDataTable_GDP_Arima")  # Table for ARIMA data
                       )
-                    )
+                    ),
+                    
+                    # Remove ARIMA Summary here because it's now in the sidebar
                   ),
                   
                   # Second tab: 
@@ -187,10 +200,13 @@ fluidPage(
                              div(class = "plot-container", plotOutput("linePlot")))
                     )
                   )
-      )
-    )
-  )
+      )  
+    )  
+  )  
 )
+
+
+
 
 
 

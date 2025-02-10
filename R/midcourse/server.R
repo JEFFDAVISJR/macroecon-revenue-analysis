@@ -360,6 +360,8 @@ function(input, output, session) {
     forecast_tib_qtr <- forecast_tib_qtr |> 
       mutate(`Year-Qtr-Float` = Year_Qtr_Float)
     
+    print(gdp_qtr_rev)
+    
     ggplot() +
       geom_line(data = gdp_qtr_rev |> 
                   filter(Year < 2024),
@@ -375,8 +377,8 @@ function(input, output, session) {
       geom_ribbon(data = forecast_tib_qtr, 
                   aes(x = Year_Qtr_Float, ymin = Lower_80, ymax = Upper_80),
                   alpha = 0.5,
-                  fill = "gray70") +
-      scale_y_continuous(labels = label_number(big.mark = ","))
+                  fill = "gray70")
+    #scale_y_continuous(labels = label_number(big.mark = ","))
     
   })
   
@@ -413,9 +415,36 @@ function(input, output, session) {
       total_rev_ts, 
       xreg = log(gdp_total_ts)
     )
-    
     # Return ARIMA model summary
     coeftest(gdp_sales_model)
+  })
+  
+  # Arima Model Tab: Table with underlying Arima data
+  
+  output$AggregatedDataTable_GDP_Arima <- DT::renderDataTable({
+    
+    # Create qtr-level revenue summary
+    qtr_rev_arima <- plot_data() |>
+      group_by(`Year-Qtr`) |>
+      summarize(
+        Total_Rev = sum(`Total Rev`, na.rm = TRUE),
+        .groups = "drop"
+      )
+
+    gdp_qtr_rev <- gdp |> 
+      inner_join(qtr_rev_arima, by = "Year-Qtr")
+    
+    gdp_qtr_rev_filtered <- gdp_qtr_rev |> 
+      select(-'Year-Qtr-Float', 'Year-Qtr_Offset1', 'Year-Qtr_Offset2')
+    
+    DT::datatable(
+      gdp_qtr_rev_filtered, 
+      options = list(
+        pageLength = 10,
+        scrollX = TRUE   # Horizontal scrolling
+      ),
+      width = "100%"
+    )
   })
 }
 
