@@ -138,7 +138,7 @@ function(input, output, session) {
     DT::datatable(
       merged_data_gdp(), 
       options = list(
-        pageLength = 10,
+        pageLength = 5,
         scrollX = TRUE   # Horizontal scrolling
       ),
       width = "100%"
@@ -262,7 +262,7 @@ function(input, output, session) {
     
     DT::datatable(
       merged_data,  # The merged data to be displayed
-      options = list(pageLength = 10, scrollX = TRUE),  # Table options
+      options = list(pageLength = 5, scrollX = TRUE),  # Table options
       width = "100%"  # Set table width
     )
   })
@@ -431,16 +431,24 @@ function(input, output, session) {
         .groups = "drop"
       )
 
+    # filter
+    exclude_columns <- c("Year", "Year-Qtr-Float", "Year-Qtr_Offset1", "Year-Qtr_Offset2")
+    
+    # Join
     gdp_qtr_rev <- gdp |> 
       inner_join(qtr_rev_arima, by = "Year-Qtr")
     
     gdp_qtr_rev_filtered <- gdp_qtr_rev |> 
-      select(-'Year-Qtr-Float', 'Year-Qtr_Offset1', 'Year-Qtr_Offset2')
+      select(-all_of(exclude_columns)) |> 
+      mutate_all(~ ifelse(is.numeric(.), 
+                          scales::comma(round(., 2)), 
+                          .))
+    
     
     DT::datatable(
       gdp_qtr_rev_filtered, 
       options = list(
-        pageLength = 10,
+        pageLength = 5,
         scrollX = TRUE   # Horizontal scrolling
       ),
       width = "100%"
