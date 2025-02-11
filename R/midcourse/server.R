@@ -134,16 +134,23 @@ function(input, output, session) {
   })
   
   # GDP Sector Tab: Table with merged data
+  
+  gdp_exclude <- c("Year","Year-Qtr-Float","Year-Qtr_Offset1", "Year-Qtr_Offset2")
+  
   output$AggregatedDataTableGDP <- DT::renderDataTable({
     DT::datatable(
-      merged_data_gdp(), 
+      merged_data_gdp() |> 
+        select(-all_of(gdp_exclude)) |> 
+        mutate(across(where(is.numeric), ~ round(.x, 2))) |> 
+        mutate(across(where(is.numeric), ~ scales::comma(.x))),  # Add commas to numeric values
       options = list(
         pageLength = 5,
-        scrollX = TRUE   # Horizontal scrolling
+        scrollX = TRUE   
       ),
       width = "100%"
     )
   })
+  
   
   # GDP Tab: Linear Regression Summary
   
@@ -153,10 +160,8 @@ function(input, output, session) {
     # Get merged data (this will trigger the reactive block to compute it)
     merged_data_gdp <- merged_data_gdp()
     
-    # Build the linear model using the merged data
     lm_model_gdp <- lm(as.formula(paste(input$scatter_y_var_gdp, "~", input$scatter_x_var_gdp)), data = merged_data_gdp)
     
-    # Return the summary of the regression model
     summary(lm_model_gdp)
   })
   
@@ -219,12 +224,12 @@ function(input, output, session) {
       summarize(Total_Rev = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
     
     # Merge month_rev with non_gdp dataset using Year-Month as common key
-    merged_data <- non_gdp |> 
+    merged_data_nongdp <- non_gdp |> 
       inner_join(month_rev, by = "Year-Month", suffix = c("_non_gdp", "_month_rev"))
-    merged_data <- merged_data |> 
+    merged_data_nongdp <- merged_data_nongdp |> 
       inner_join(month_rev, by = c("Year-Month_Offset1" = "Year-Month"), suffix = c("", "_Offset1")) %>%
       rename(Total_Rev_Offset1 = Total_Rev_Offset1)
-    merged_data <- merged_data |> 
+    merged_data_nongdp <- merged_data_nongdp |> 
       inner_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2")) %>%
       rename(Total_Rev_Offset2 = Total_Rev_Offset2)
     
@@ -233,7 +238,7 @@ function(input, output, session) {
     y_var <- input$scatter_y_var
     
     # Plot the selected X and Y axis variables
-    ggplot(merged_data, aes_string(x = x_var, y = y_var)) +
+    ggplot(merged_data_nongdp, aes_string(x = x_var, y = y_var)) +
       geom_point(color = "darkblue") +
       labs(
         title = glue("{x_var} vs {y_var}"),
@@ -251,19 +256,24 @@ function(input, output, session) {
       group_by(`Year-Month`) |> 
       summarize(Total_Rev = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
     
-    merged_data <- non_gdp |> 
+    merged_data_nongdp <- non_gdp |> 
       inner_join(month_rev, by = "Year-Month", suffix = c("_non_gdp", "_month_rev"))
-    merged_data <- merged_data |> 
+    merged_data_nongdp <- merged_data_nongdp |> 
       inner_join(month_rev, by = c("Year-Month_Offset1" = "Year-Month"), suffix = c("", "_Offset1")) %>%
       rename(Total_Rev_Offset1 = Total_Rev_Offset1)
-    merged_data <- merged_data |> 
+    merged_data_nongdp <- merged_data_nongdp |> 
       inner_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2")) %>%
       rename(Total_Rev_Offset2 = Total_Rev_Offset2)
     
+    nongdp__exclude_columns <- c("Year-Month_Offset1", "Year-Month_Offset2")
+    
+    merged_data_nongdp <- merged_data_nongdp |> 
+      select(-all_of(nongdp__exclude_columns))
+    
     DT::datatable(
-      merged_data,  # The merged data to be displayed
-      options = list(pageLength = 5, scrollX = TRUE),  # Table options
-      width = "100%"  # Set table width
+      merged_data_nongdp,  
+      options = list(pageLength = 5, scrollX = TRUE), 
+      width = "100%"  
     )
   })
 
@@ -288,10 +298,10 @@ function(input, output, session) {
       inner_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2")) %>%
       rename(Total_Rev_Offset2 = Total_Rev_Offset2)
     
-    # Build the linear model using the merged data
+    # lm model
     lm_model <- lm(as.formula(paste(y_var, "~", x_var)), data = merged_data)
     
-    # Return the summary of the regression model
+    # Return lm model
     summary(lm_model)
   })
   
@@ -443,7 +453,6 @@ function(input, output, session) {
       mutate_all(~ ifelse(is.numeric(.), 
                           scales::comma(round(., 2)), 
                           .))
-    
     
     DT::datatable(
       gdp_qtr_rev_filtered, 
