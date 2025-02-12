@@ -34,25 +34,25 @@ fluidPage(
                              step = 1, 
                              animate = TRUE),
                  
-                 # Conditional dropdown for x-axis var in scatter plot for Economic Indicator Comparison tab
+                 # Conditional dropdown for x-axis var in scatter plot for Monthly Economic Indicator Comparison tab
                  conditionalPanel(
-                   condition = "input.tabs == 'Economic Indicator Comparison'",  # Show on Economic Indicator tab
+                   condition = "input.tabs == 'Monthly Economic Indicators'",  # Show on Monthly Economic Indicator tab
                    selectInput("scatter_x_var", 
                                label = "Select Variable for X-Axis", 
                                choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment"))
                  ),
                  
-                 # Conditional dropdown for Y-axis variable in scatter plot for Economic Indicator Comparison tab
+                 # Conditional dropdown for Y-axis variable in scatter plot for Monthly Economic Indicator Comparison tab
                  conditionalPanel(
-                   condition = "input.tabs == 'Economic Indicator Comparison'",  # Show on Economic Indicator tab
+                   condition = "input.tabs == 'Monthly Economic Indicators'",  # Show on Monthly Economic Indicator tab
                    selectInput("scatter_y_var", 
                                label = "Select Variable for Y-Axis", 
                                choices = c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2"))
                  ),
                  
-                 # Conditional dropdown for x-axis var in scatter plot for GDP Sector Comparison tab
+                 # Conditional dropdown for x-axis var in scatter plot for Quarterly Economic Indicators tab
                  conditionalPanel(
-                   condition = "input.tabs == 'GDP Sector Comparison'",  # Show on GDP tab
+                   condition = "input.tabs == 'Quarterly Economic Indicators'",  # Show on Quarteryl Economic (GDP) tab
                    selectInput("scatter_x_var_gdp", 
                                label = "Select Variable for X-Axis (GDP)", 
                                choices = c("Accommodation_Food_Services", "Agriculture_FFH", "Air_Trans", "Arts_Entertainment_Rec", 
@@ -76,17 +76,17 @@ fluidPage(
                                            "Utilities", "Warehousing_Storage", "Water_Trans", "Wholesale_Trade", "GDP_Total"))
                  ),
                  
-                 # Conditional dropdown for Y-axis variable in scatter plot for GDP Sector Comparison tab
+                 # Conditional dropdown for Y-axis variable in scatter plot for Quarterly Economic (GDP) Comparison tab
                  conditionalPanel(
-                   condition = "input.tabs == 'GDP Sector Comparison'",  # Show on GDP tab
+                   condition = "input.tabs == 'Quarterly Economic Indicators'",  # Show on Quarterly Economic tab
                    selectInput("scatter_y_var_gdp", 
                                label = "Select Variable for Y-Axis (GDP)", 
                                choices = c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2"))
                  ),
                  
-                 # put lm summ underneath the filters for Economic Indicator tab
+                 # put lm summ underneath the filters for Monthly Economic Indicator tab
                  conditionalPanel(
-                   condition = "input.tabs == 'Economic Indicator Comparison'",  # Only show in Economic Indicator Comparison tab
+                   condition = "input.tabs == 'Monthly Economic Indicators'",  # Only show in Monthly Economic Indicator Comparison tab
                    fluidRow(
                      column(width = 12,
                             tags$strong("Linear Regression Summary"),
@@ -97,7 +97,7 @@ fluidPage(
                  
                  # gdp output summary in sidepanel
                  conditionalPanel(
-                   condition = "input.tabs == 'GDP Sector Comparison'",  # Only show in GDP Sector Comparison tab
+                   condition = "input.tabs == 'Quarterly Economic Indicators'",  # Only show in Quarterly Economic Indicator (GDP) tab
                    fluidRow(
                      column(width = 12,
                             tags$strong("Linear Regression Summary for GDP"),
@@ -124,9 +124,9 @@ fluidPage(
     mainPanel(
       tabsetPanel(id = "tabs",  # Assign an id to the tabsetPanel for reference in conditionalPanel
                   
-                  # First tab: both dist and scatter for Economic Indicators
+                  # First tab: both dist and scatter for Monthly Economic Indicators
                   tabPanel(
-                    "Economic Indicator Comparison", 
+                    "Monthly Economic Indicators", 
                     fluidRow(
                       column(width = 12,
                              div(class = "plot-container", plotOutput("distPlot")))  # dist plot
@@ -148,9 +148,9 @@ fluidPage(
                     )
                   ),
                   
-                  # GDP Sector Comparison tab
+                  # Quarterly Economic Indicators tab (GDP Sector Comparison)
                   tabPanel(
-                    "GDP Sector Comparison",
+                    "Quarterly Economic Indicators",
                     fluidRow(
                       column(width = 12,
                              div(class = "plot-container", plotOutput("distPlotGDP")))  # Same histogram here
@@ -203,6 +203,7 @@ fluidPage(
     )  
   )  
 )
+
 
 
 

@@ -38,7 +38,7 @@ function(input, output, session) {
   
   # GDP Sector Tab: Distribution of Total Rev for GDP (Filtered by Percentile Range)
   output$distPlotGDP <- renderPlot({
-    req(input$tabs == "GDP Sector Comparison")  # Ensure the tab is active
+    req(input$tabs == "Quarterly Economic Indicators")  # Ensure the tab is active
     
     title <- glue("Distribution of {input$S_Cons_Order_Class} within Sales Percentile Range: {input$slider2[1]}% - {input$slider2[2]}%")
     
@@ -449,16 +449,16 @@ function(input, output, session) {
       inner_join(qtr_rev_arima, by = "Year-Qtr")
     
     gdp_qtr_rev_filtered <- gdp_qtr_rev |> 
-      select(-all_of(exclude_columns)) |> 
-      mutate_all(~ ifelse(is.numeric(.), 
-                          scales::comma(round(., 2)), 
-                          .))
-    
+      select(-all_of(exclude_columns))
+      # mutate_all(~ ifelse(is.numeric(.),
+      #                     scales::comma(round(., 2)),
+      #                     .))
+      # 
     DT::datatable(
       gdp_qtr_rev_filtered, 
       options = list(
         pageLength = 5,
-        scrollX = TRUE   # Horizontal scrolling
+        scrollX = TRUE  
       ),
       width = "100%"
     )
