@@ -8,7 +8,6 @@
 #
 
 fluidPage(
-  
   titlePanel(
     HTML('<span style="font-size: 24px; 
          font-weight: bold; 
@@ -50,38 +49,12 @@ fluidPage(
                                choices = c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2"))
                  ),
                  
-                 # Conditional dropdown for x-axis var in scatter plot for Quarterly Economic Indicators tab
+                 # Add dropdown for X-regression in the "Arima Model Monthly" tab
                  conditionalPanel(
-                   condition = "input.tabs == 'Quarterly Economic Indicators'",  # Show on Quarteryl Economic (GDP) tab
-                   selectInput("scatter_x_var_gdp", 
-                               label = "Select Variable for X-Axis (GDP)", 
-                               choices = c("Accommodation_Food_Services", "Agriculture_FFH", "Air_Trans", "Arts_Entertainment_Rec", 
-                                           "Construction", "Educational_Health_Social", "Federal", "Finance_Ins_RealEstate", 
-                                           "Information", "Manufacturing", "Mining", "Other_Services_Not_Government", 
-                                           "Other_Trans_Support_Activity", "Pipeline_Transportation", "Professional_Business_Services", 
-                                           "Rail_Transportation", "Retail_Trade", "State_Local", "Transit_Ground_Trans", "Truck_Trans", 
-                                           "Utilities", "Warehousing_Storage", "Water_Trans", "Wholesale_Trade", "GDP_Total"))
-                 ),
-                 
-                 # Conditional dropdown for x-axis var in scatter plot for Arima tab
-                 conditionalPanel(
-                   condition = "input.tabs == 'Arima Model'",  # Show on Arima tab
-                   selectInput("scatter_x_reg", 
-                               label = "Select Variable for X-Axis (GDP)", 
-                               choices = c("Accommodation_Food_Services", "Agriculture_FFH", "Air_Trans", "Arts_Entertainment_Rec", 
-                                           "Construction", "Educational_Health_Social", "Federal", "Finance_Ins_RealEstate", 
-                                           "Information", "Manufacturing", "Mining", "Other_Services_Not_Government", 
-                                           "Other_Trans_Support_Activity", "Pipeline_Transportation", "Professional_Business_Services", 
-                                           "Rail_Transportation", "Retail_Trade", "State_Local", "Transit_Ground_Trans", "Truck_Trans", 
-                                           "Utilities", "Warehousing_Storage", "Water_Trans", "Wholesale_Trade", "GDP_Total"))
-                 ),
-                 
-                 # Conditional dropdown for Y-axis variable in scatter plot for Quarterly Economic (GDP) Comparison tab
-                 conditionalPanel(
-                   condition = "input.tabs == 'Quarterly Economic Indicators'",  # Show on Quarterly Economic tab
-                   selectInput("scatter_y_var_gdp", 
-                               label = "Select Variable for Y-Axis (GDP)", 
-                               choices = c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2"))
+                   condition = "input.tabs == 'Arima Model Monthly'",  # Show on Arima Model Monthly tab
+                   selectInput("monthly_x_reg", 
+                               label = "Select Variable for X-Axis (ARIMA Regression)", 
+                               choices = c("CCI","Fed_Funds_Rate","New_Jobs",	"Jet_Fuel","Unemployment"))
                  ),
                  
                  # put lm summ underneath the filters for Monthly Economic Indicator tab
@@ -190,6 +163,24 @@ fluidPage(
                     
                   ),
                   
+                  # New Arima Model Monthly tab
+                  tabPanel(
+                    "Arima Model Monthly",
+                    fluidRow(
+                      column(width = 12,
+                             tags$strong("ARIMA Model Monthly Results"),
+                             plotOutput("arimamonthlyPlot")  # Placeholder for ARIMA plot for monthly data
+                      )
+                    ),
+                    fluidRow(
+                      column(width = 12,
+                             tags$strong("ARIMA Model Monthly Underlying Data"),
+                             DT::dataTableOutput("AggregatedDataTable_Monthly_Arima")  # Table for monthly ARIMA data
+                      )
+                    ),
+                    
+                  ),
+                  
                   # Second tab: Facet Grid tab (Commented out to disable it)
                   # tabPanel(
                   #   "Facet Grid",
@@ -203,6 +194,9 @@ fluidPage(
     )  
   )  
 )
+
+
+
 
 
 

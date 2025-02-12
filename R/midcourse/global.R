@@ -6,6 +6,7 @@ library(lmtest)
 library(scales)
 #install.packages("forecast")
 library(forecast)
+library(lubridate)
 
 sales <- read_csv("./data/read_summarized_sales_clean_new.csv")
 sales <- sales %>%

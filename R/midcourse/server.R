@@ -305,7 +305,7 @@ function(input, output, session) {
     summary(lm_model)
   })
   
-  # ARIMA Tab: Arima Model Results_Plot
+  # Quarterly ARIMA Tab: Arima Model Results_Plot
   output$arimaPlot <- renderPlot({
     req(input$scatter_x_reg)  # Ensure both variables are selected
     
@@ -333,7 +333,7 @@ function(input, output, session) {
     total_rev_ts <- ts(model_tib_gdp$Total_Rev, start = min(model_tib_gdp$Year), frequency = 4)
     gdp_total_ts <- ts(model_tib_gdp[[input$scatter_x_reg]], start = min(model_tib_gdp$Year), frequency = 4)
     
-    # Fit ARIMA model with GDP as an external regressor
+    # Fit Quarterly ARIMA model with GDP as an external regressor
     gdp_sales_model <- auto.arima(
       total_rev_ts, 
       xreg = log(gdp_total_ts)
@@ -392,7 +392,7 @@ function(input, output, session) {
     
   })
   
-  # Display ARIMA Model Summary below the plot
+  # Display Quarterly ARIMA Model Summary below the plot
   output$arimaSummary <- renderPrint({
     req(input$scatter_x_reg)  # Ensure both variables are selected
     
@@ -429,7 +429,7 @@ function(input, output, session) {
     coeftest(gdp_sales_model)
   })
   
-  # Arima Model Tab: Table with underlying Arima data
+  # Quarterly Arima Model Tab: Table with underlying Arima data
   
   output$AggregatedDataTable_GDP_Arima <- DT::renderDataTable({
     
@@ -456,6 +456,131 @@ function(input, output, session) {
       # 
     DT::datatable(
       gdp_qtr_rev_filtered, 
+      options = list(
+        pageLength = 5,
+        scrollX = TRUE  
+      ),
+      width = "100%"
+    )
+  })
+    # Monthly ARIMA Tab: Arima Model Results_Plot
+  output$arimamonthlyPlot <- renderPlot({
+    req(input$monthly_x_reg)  # Ensure both variables are selected
+    
+    # Get the selected variables for X and Y from the user input
+    x_var_monthly <- input$monthly_x_reg
+    
+    # Create month-level revenue summary
+    monthly_rev <- plot_data() |> 
+      group_by(`Year-Month`) |> 
+      summarize(
+        Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
+        .groups = "drop"
+      ) 
+    
+    merged_nongdp <- non_gdp |> 
+      inner_join(monthly_rev, by = "Year-Month")
+    
+    merged_nongdp
+    
+    
+    # Convert Year-Month column to Date object
+    merged_nongdp$`Year-Month-No` <- as.Date(paste(merged_nongdp$`Year-Month-No`, "01", sep = "-"), format = "%Y-%m-%d")
+    
+    
+    #Use data before the cutoff year to fit the model
+    
+    model_tib_ngdp <- merged_nongdp |> 
+      arrange(Year, MonthNo) |> 
+      filter(Year < cutoff_year)
+    
+    model_tib_ngdp
+    
+    m_total_rev_ts <- ts(model_tib_ngdp$Total_Rev, start = min(model_tib_ngdp$Year), frequency = 12)
+    unemployment_ts <- ts(model_tib_ngdp[[input$monthly_x_reg]], start = min(model_tib_ngdp$Year), frequency = 12)
+    
+    # Fit Monthly ARIM A model with GDP as an external regressor
+    n_gdp_sales_model <- auto.arima(
+      m_total_rev_ts, 
+      xreg = log(unemployment_ts)
+    )
+    
+    summary(n_gdp_sales_model)
+    
+    future_unemployment <- merged_nongdp |> 
+      arrange(Year) |> 
+      filter(Year >= cutoff_year) |>
+      filter(Year <= 2024) |> 
+      pull(Unemployment)
+    
+    forecasted_values <- forecast(n_gdp_sales_model, 
+                                  xreg = log(future_unemployment)
+    )
+    
+    
+    start_year <- 2023
+    
+    months <- c("2023-1","2023-2","2023-3","2023-4","2023-5","2023-6","2023-7","2023-8","2023-9","2023-10","2023-11","2023-12",
+                "2024-1","2024-2","2024-3","2024-4","2024-5","2024-6","2024-7","2024-8","2024-9","2024-10","2024-11","2024-12"
+    )
+    
+    year = c(2023,2024)
+    
+    forecast_tib_monthly <- tibble(months,
+                                   Total_Rev_Exp_Pred = forecasted_values$mean,
+                                   Lower_80 = forecasted_values$lower[,1],
+                                   Upper_80 = forecasted_values$upper[,1],
+                                   Lower_95 = forecasted_values$lower[,2],
+                                   Upper_95 = forecasted_values$upper[,2]
+    )
+    
+    # Convert Year-Month column to Date object.
+    forecast_tib_monthly$months <- as.Date(paste(forecast_tib_monthly$months, "01", sep = "-"), format = "%Y-%m-%d")
+    
+  
+    ggplot() +
+      geom_line(data = merged_nongdp |> 
+                  filter(Year <= 2024),
+                aes(x = `Year-Month-No`, y = `Total_Rev`)
+      ) +
+      geom_line(data = forecast_tib_monthly, 
+                aes(x = months, y = `Total_Rev_Exp_Pred` ), 
+                linetype = "dashed") +
+      geom_ribbon(data = forecast_tib_monthly, 
+                  aes(x = months, ymin = Lower_95, ymax = Upper_95), 
+                  alpha = 0.5,
+                  fill = "gray80") +
+      geom_ribbon(data = forecast_tib_monthly, 
+                  aes(x = months, ymin = Lower_80, ymax = Upper_80),
+                  alpha = 0.5,
+                  fill = "gray70") +
+      scale_y_continuous(labels = label_number(big.mark = ","))
+    
+  })
+  
+  # Display Monthly ARIMA Model Summary below the plot
+  output$arimaSummary <- renderPrint({
+    
+  })
+  
+  # Monthly Arima Model Tab: Table with underlying Arima data
+  
+  output$AggregatedDataTable_Monthly_Arima <- DT::renderDataTable({
+    
+    # Create month-level revenue summary
+    monthly_rev <- plot_data() |> 
+      group_by(`Year-Month`) |> 
+      summarize(
+        Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
+        .groups = "drop"
+      ) 
+    
+    merged_nongdp <- non_gdp |> 
+      inner_join(monthly_rev, by = "Year-Month")
+    
+    
+    DT::datatable(
+      merged_nongdp, 
       options = list(
         pageLength = 5,
         scrollX = TRUE  
