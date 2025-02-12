@@ -188,22 +188,24 @@ fluidPage(
                       )
                     ),
                     
-                    # Remove ARIMA Summary here because it's now in the sidebar
                   ),
                   
-                  # Second tab: 
-                  tabPanel(
-                    "Facet Grid",
-                    tags$strong("Order Class YoY Trends"),
-                    fluidRow(
-                      column(width = 12,
-                             div(class = "plot-container", plotOutput("linePlot")))
-                    )
-                  )
+                  # Second tab: Facet Grid tab (Commented out to disable it)
+                  # tabPanel(
+                  #   "Facet Grid",
+                  #   tags$strong("Order Class YoY Trends"),
+                  #   fluidRow(
+                  #     column(width = 12,
+                  #            div(class = "plot-container", plotOutput("linePlot")))
+                  #   )
+                  # )
       )  
     )  
   )  
 )
+
+
+
 
 
 
