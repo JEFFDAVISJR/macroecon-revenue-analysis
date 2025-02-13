@@ -123,6 +123,16 @@ fluidPage(
                             verbatimTextOutput("arimaSummary")  # Display the ARIMA model summary in the sidebar
                      )
                    )
+                 ),
+                 # Conditional display (Monthly ARIMA Model sidebar summary)
+                 conditionalPanel(
+                   condition = "input.tabs == 'Forecast Model (Monthly)'",
+                   fluidRow(
+                     column(width = 12,
+                            tags$strong("ARIMA Model Summary"),
+                            verbatimTextOutput("ArimaMonthlySummary")  # Display the ARIMA model summary in the sidebar
+                     )
+                   )
                  )
     ),
     
