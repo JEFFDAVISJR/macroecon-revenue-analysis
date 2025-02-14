@@ -38,7 +38,7 @@ function(input, output, session) {
   
   # GDP Sector Tab: Distribution of Total Rev for GDP (Filtered by Percentile Range)
   output$distPlotGDP <- renderPlot({
-    req(input$tabs == "Quarterly Economic Indicators")  # Ensure the tab is active
+    req(input$tabs == "Linear Regression (Quarterly)")  # Ensure the tab is active
     
     title <- glue("Distribution of {input$S_Cons_Order_Class} within Sales Percentile Range: {input$slider2[1]}% - {input$slider2[2]}%")
     
@@ -130,7 +130,7 @@ function(input, output, session) {
       ) +
       theme_minimal() +
       geom_smooth(method = lm, color = "forestgreen") +
-      theme(plot.title = element_text(face = "bold"))
+      theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 16, color = "#333333"))
   })
   
   # GDP Sector Tab: Table with merged data
@@ -150,7 +150,6 @@ function(input, output, session) {
       width = "100%"
     )
   })
-  
   
   # GDP Tab: Linear Regression Summary
   
@@ -247,7 +246,7 @@ function(input, output, session) {
       ) +
       theme_minimal() +
       geom_smooth(method = lm) +
-      theme(plot.title = element_text(face = "bold"))
+      theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 16, color = "#333333"))
   })
   
   # Economic Indicator Tab: Underlying Data Table for Scatter Plot
@@ -265,7 +264,7 @@ function(input, output, session) {
       inner_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2")) %>%
       rename(Total_Rev_Offset2 = Total_Rev_Offset2)
     
-    nongdp__exclude_columns <- c("Year-Month_Offset1", "Year-Month_Offset2")
+    nongdp__exclude_columns <- c("Year","Month","Year-Month-No","MonthNo","Year-Month-No-Float","Year-Month_Offset1", "Year-Month_Offset2")
     
     merged_data_nongdp <- merged_data_nongdp |> 
       select(-all_of(nongdp__exclude_columns))
@@ -372,23 +371,52 @@ function(input, output, session) {
     
     print(gdp_qtr_rev)
     
+    library(ggplot2)
+    library(scales)
+    library(glue)
+    
+    # Assuming 'gdp_qtr_rev' and 'forecast_tib_qtr' are your data frames
+    
     ggplot() +
+      # Plot actual
       geom_line(data = gdp_qtr_rev |> 
                   filter(Year < 2024),
-                aes(x = `Year-Qtr-Float`, y = Total_Rev)
-      ) +
+                aes(x = `Year-Qtr-Float`, y = Total_Rev),
+                color = "blue", size = 1) +  # Blue line for actual values
+      
+      # Plot predicted
       geom_line(data = forecast_tib_qtr, 
-                aes(x = Year_Qtr_Float, y = Total_Rev_Exp_Pred ), 
-                linetype = "dashed") +
+                aes(x = Year_Qtr_Float, y = Total_Rev_Exp_Pred), 
+                linetype = "dashed", color = "red", size = 1) +  # Dashed red line for predictions
+      
+      # Confidence intervals
       geom_ribbon(data = forecast_tib_qtr, 
                   aes(x = Year_Qtr_Float, ymin = Lower_95, ymax = Upper_95), 
-                  alpha = 0.5,
-                  fill = "gray80") +
+                  alpha = 0.3, fill = "gray80") +  # 95% confidence interval
+      
       geom_ribbon(data = forecast_tib_qtr, 
                   aes(x = Year_Qtr_Float, ymin = Lower_80, ymax = Upper_80),
-                  alpha = 0.5,
-                  fill = "gray70")
-    #scale_y_continuous(labels = label_number(big.mark = ","))
+                  alpha = 0.3, fill = "gray70") +  # 80% confidence interval
+      
+      # 
+      scale_y_continuous(labels = label_number(big.mark = ",")) +
+      
+      # 
+      theme_minimal(base_size = 15) +
+      theme(
+        plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+        axis.title.x = element_blank(),  # Remove x-axis label
+        axis.title.y = element_text(face = "bold", size = 14),
+        axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better fit
+        axis.text.y = element_text(size = 12),
+        legend.position = "bottom"  # Position legend at the bottom if applicable
+      ) +
+      
+      # Title
+      labs(
+        title = glue("Actual Revenue vs Predicted Revenue by Quarter (Predictor Var: {input$scatter_x_reg})"),
+        y = "Total Revenue (USD)"
+      )
     
   })
   
@@ -533,20 +561,49 @@ function(input, output, session) {
     
     # Create the plot
     ggplot() +
+      # Plot actual
       geom_line(data = merged_nongdp |> 
                   filter(Year <= 2024),
-                aes(x = `Year-Month-No`, y = `Total_Rev`)
-      ) +
+                aes(x = `Year-Month-No`, y = `Total_Rev`),
+                color = "blue", size = 1) +  # Set color and line thickness for clarity
+      
+      # Plot predicted
       geom_line(data = forecast_tib_monthly, 
                 aes(x = months, y = `Total_Rev_Exp_Pred`), 
-                linetype = "dashed") +
+                linetype = "dashed", color = "red", size = 1) +  # Dashed line for predicted values
+      
+      # Confidence intervals
       geom_ribbon(data = forecast_tib_monthly, 
                   aes(x = months, ymin = Lower_95, ymax = Upper_95), 
-                  alpha = 0.5, fill = "gray80") +
+                  alpha = 0.3, fill = "gray80") +  # 95% confidence interval
+      
       geom_ribbon(data = forecast_tib_monthly, 
                   aes(x = months, ymin = Lower_80, ymax = Upper_80),
-                  alpha = 0.5, fill = "gray70") +
-      scale_y_continuous(labels = label_number(big.mark = ","))
+                  alpha = 0.3, fill = "gray70") +  # 80% confidence interval
+      
+      # 
+      scale_y_continuous(labels = label_number(big.mark = ",")) +
+      
+      # 
+      scale_x_date(labels = date_format("%b %Y"), breaks = "3 months") +  
+      
+      # 
+      theme_minimal(base_size = 15) +
+      theme(
+        plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+        axis.title.x = element_blank(),  # Remove x-axis label
+        axis.title.y = element_text(face = "bold", size = 14),
+        axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better fit
+        axis.text.y = element_text(size = 12),
+        legend.position = "bottom"  # Position legend at the bottom if applicable
+      ) +
+      
+      
+      labs(
+        title = glue("Actual Revenue vs Predicted Revenue by Month (Predictor Var: {input$monthly_x_reg})"),
+        x = "Month",
+        y = "Total Revenue (USD)"
+      )
   })
   
   # Display Monthly ARIMA Model Summary below the plot
@@ -591,6 +648,7 @@ function(input, output, session) {
   
   output$AggregatedDataTable_Monthly_Arima <- DT::renderDataTable({
     
+    
     # Create month-level revenue summary
     monthly_rev <- plot_data() |> 
       group_by(`Year-Month`) |> 
@@ -603,8 +661,14 @@ function(input, output, session) {
       inner_join(monthly_rev, by = "Year-Month")
     
     
+    exclude_columns <- c("Year","Month","MonthNo","Year-Month-No","Year-Month-No-Float", "Year-Month_Offset1", "Year-Month_Offset2")
+    
+    merged_nongdp_filtered <- merged_nongdp |> 
+      select(-all_of(exclude_columns))
+    
+    
     DT::datatable(
-      merged_nongdp, 
+      merged_nongdp_filtered, 
       options = list(
         pageLength = 5,
         scrollX = TRUE  

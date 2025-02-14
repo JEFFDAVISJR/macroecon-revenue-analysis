@@ -35,7 +35,7 @@ fluidPage(
                  
                  # Conditional drop down (Monthly Economic Indicator tab x-axis var/scatter plot)
                  conditionalPanel(
-                   condition = "input.tabs == 'Monthly Economic Indicators'",  # Show on Monthly Economic Indicator tab
+                   condition = "input.tabs == 'Linear Regression (Monthly)'",  # Show on Monthly Economic Indicator tab
                    selectInput("scatter_x_var", 
                                label = "Select Variable for X-Axis", 
                                choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment"))
@@ -43,7 +43,7 @@ fluidPage(
                  
                  # Conditional drop down (Monthly Economic Indicator tab y-axis var/scatter plot) 
                  conditionalPanel(
-                   condition = "input.tabs == 'Monthly Economic Indicators'",  # Show on Monthly Economic Indicator tab
+                   condition = "input.tabs == 'Linear Regression (Monthly)'",  # Show on Monthly Economic Indicator tab
                    selectInput("scatter_y_var", 
                                label = "Select Variable for Y-Axis", 
                                choices = c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2"))
@@ -51,7 +51,7 @@ fluidPage(
                  
                  # Conditional drop down (Quarterly Economic Indicators tab x-axis var/scatter plot)
                  conditionalPanel(
-                   condition = "input.tabs == 'Quarterly Economic Indicators'",  
+                   condition = "input.tabs == 'Linear Regression (Quarterly)'",  
                    selectInput("scatter_x_var_gdp", 
                                label = "Select Variable for X-Axis", 
                                choices = c("Accommodation_Food_Services", "Agriculture_FFH", "Air_Trans", "Arts_Entertainment_Rec", 
@@ -64,7 +64,7 @@ fluidPage(
                  
                  # Conditional drop down (Quarterly Economic Indicators Y-axis var/scatter plot)
                  conditionalPanel(
-                   condition = "input.tabs == 'Quarterly Economic Indicators'",  # Show on GDP tab
+                   condition = "input.tabs == 'Linear Regression (Quarterly)'",  # Show on GDP tab
                    selectInput("scatter_y_var_gdp", 
                                label = "Select Variable for Y-Axis", 
                                choices = c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2"))
@@ -72,7 +72,7 @@ fluidPage(
                  
                  # Conditional drop down (Monthly Arima Model X-reg)
                  conditionalPanel(
-                   condition = "input.tabs == 'Forecast Model (Monthly)'",  
+                   condition = "input.tabs == 'ARIMA (Monthly)'",  
                    selectInput("monthly_x_reg", 
                                label = "Select Variable", 
                                choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment"))
@@ -80,7 +80,7 @@ fluidPage(
                  
                  # Conditional drop down (Quarterly Arima Model x-reg var)
                  conditionalPanel(
-                   condition = "input.tabs == 'Forecast Model (Quarterly)'",  
+                   condition = "input.tabs == 'ARIMA (Quarterly)'",  
                    selectInput("scatter_x_reg", 
                                label = "Select Variable", 
                                choices = c("Accommodation_Food_Services", "Agriculture_FFH", "Air_Trans", "Arts_Entertainment_Rec", 
@@ -94,7 +94,7 @@ fluidPage(
                  
                  # Conditional display (Monthly Economic Indicators linear regression model summary)
                  conditionalPanel(
-                   condition = "input.tabs == 'Monthly Economic Indicators'",  # Only show in Monthly Economic Indicator tab
+                   condition = "input.tabs == 'Linear Regression (Monthly)'",  # Only show in Monthly Economic Indicator tab
                    fluidRow(
                      column(width = 12,
                             tags$strong("Linear Regression Summary"),
@@ -105,7 +105,7 @@ fluidPage(
                  
                  # Conditional display (Quarterly Economic Indicators linear regression model summary)
                  conditionalPanel(
-                   condition = "input.tabs == 'Quarterly Economic Indicators'",  # Only show in Quarterly Economic Indicator (GDP) tab
+                   condition = "input.tabs == 'Linear Regression (Quarterly)'",  # Only show in Quarterly Economic Indicator (GDP) tab
                    fluidRow(
                      column(width = 12,
                             tags$strong("Linear Regression Summary"),
@@ -116,7 +116,7 @@ fluidPage(
                  
                  # Conditional display (Monthly ARIMA Model sidebar summary)
                  conditionalPanel(
-                   condition = "input.tabs == 'Forecast Model (Quarterly)'",
+                   condition = "input.tabs == 'ARIMA (Quarterly)'",
                    fluidRow(
                      column(width = 12,
                             tags$strong("ARIMA Model Summary"),
@@ -126,7 +126,7 @@ fluidPage(
                  ),
                  # Conditional display (Monthly ARIMA Model sidebar summary)
                  conditionalPanel(
-                   condition = "input.tabs == 'Forecast Model (Monthly)'",
+                   condition = "input.tabs == 'ARIMA (Monthly)'",
                    fluidRow(
                      column(width = 12,
                             tags$strong("ARIMA Model Summary"),
@@ -142,7 +142,7 @@ fluidPage(
                   
                   # Monthly Economic Indicators
                   tabPanel(
-                    "Monthly Economic Indicators", 
+                    "Linear Regression (Monthly)", 
                     fluidRow(
                       column(width = 12,
                              div(class = "plot-container", plotOutput("distPlot")))  # dist plot
@@ -166,7 +166,7 @@ fluidPage(
                   
                   # Quarterly Economic Indicators
                   tabPanel(
-                    "Quarterly Economic Indicators",
+                    "Linear Regression (Quarterly)",
                     fluidRow(
                       column(width = 12,
                              div(class = "plot-container", plotOutput("distPlotGDP")))  # Same histogram here
@@ -190,7 +190,7 @@ fluidPage(
                   
                   # Forecast Model (Monthly)
                   tabPanel(
-                    "Forecast Model (Monthly)",
+                    "ARIMA (Monthly)",
                     fluidRow(
                       column(width = 12,
                              tags$strong("ARIMA Model Monthly Results"),
@@ -208,7 +208,7 @@ fluidPage(
                   
                   # Forecast Model (Quarterly)
                   tabPanel(
-                    "Forecast Model (Quarterly)",
+                    "ARIMA (Quarterly)",
                     fluidRow(
                       column(width = 12,
                              tags$strong("ARIMA Model Results"),
