@@ -41,10 +41,10 @@ fluidPage(
                                choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment"))
                  ),
                  
-                 # Conditional drop down (Quarterly Economic Indicators tab x-axis var/scatter plot)
+                 # Conditional drop down (Quarterly Economic Indicators tab x-axis var/line plot)
                  conditionalPanel(
                    condition = "input.tabs == 'Linear Regression (Quarterly)'",  
-                   selectInput("scatter_x_var_gdp", 
+                   selectInput("line_x_var_gdp", 
                                label = "Select Variable for X-Axis", 
                                choices = c("Accommodation_Food_Services", "Agriculture_FFH", "Air_Trans", "Arts_Entertainment_Rec", 
                                            "Construction", "Educational_Health_Social", "Federal", "Finance_Ins_RealEstate", 
@@ -53,15 +53,7 @@ fluidPage(
                                            "Rail_Transportation", "Retail_Trade", "State_Local", "Transit_Ground_Trans", "Truck_Trans", 
                                            "Utilities", "Warehousing_Storage", "Water_Trans", "Wholesale_Trade", "GDP_Total"))
                  ),
-                 
-                 # Conditional drop down (Quarterly Economic Indicators Y-axis var/scatter plot)
-                 conditionalPanel(
-                   condition = "input.tabs == 'Linear Regression (Quarterly)'",  # Show on GDP tab
-                   selectInput("scatter_y_var_gdp", 
-                               label = "Select Variable for Y-Axis", 
-                               choices = c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2"))
-                 ),
-                 
+          
                  # Conditional drop down (Monthly Arima Model X-reg)
                  conditionalPanel(
                    condition = "input.tabs == 'ARIMA (Monthly)'",  
@@ -167,7 +159,7 @@ fluidPage(
                       column(width = 12,
                              div(
                                style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
-                               plotOutput("scatterPlotGDP", height = "300px")
+                               plotOutput("linePlotGDP", height = "300px")
                              ))  # scatter plot with border wrapped in div
                     ),
                     

@@ -61,107 +61,109 @@ function(input, output, session) {
       ) +
       scale_y_continuous(labels = scales::comma)  # Format y-axis numbers with commas
   })
-  
-  # GDP Sector: Data for the table and scatter plot (Merged Data)
-  merged_data_gdp <- reactive({
-    # agg
-    qtr_rev_agg_0 <- plot_data() |> 
+
+  # GDP Sector Tab: LM Line Plot 
+  output$linePlotGDP <- renderPlot({
+    qtr_rev <- plot_data() |> 
       group_by(`Year-Qtr`) |> 
       summarize(
         Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
         .groups = "drop"
-      )
+      ) 
     
-    gdp$`Year-Qtr` <- as.character(gdp$`Year-Qtr`)
-    qtr_rev_agg_0$`Year-Qtr` <- as.character(qtr_rev_agg_0$`Year-Qtr`)
+    merged_gdp <- gdp |> 
+      inner_join(qtr_rev, by = "Year-Qtr")
     
-    merged_data_gdp <- gdp |> 
-      inner_join(qtr_rev_agg_0, by = "Year-Qtr")
-    
-    # Second aggregation(qtr_rev_agg_1)
-    qtr_rev_agg_1 <- plot_data() |> 
-      group_by(`Year-Qtr_Offset1`) |> 
-      summarize(
-        Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
-        .groups = "drop"
-      ) %>%
-      rename(Total_Rev_Offset1 = Total_Rev)
-    
-    merged_data_gdp$`Year-Qtr_Offset1` <- as.character(merged_data_gdp$`Year-Qtr_Offset1`)
-    qtr_rev_agg_1$`Year-Qtr_Offset1` <- as.character(qtr_rev_agg_1$`Year-Qtr_Offset1`)
-    
-    merged_data_gdp <- merged_data_gdp |> 
-      inner_join(qtr_rev_agg_1, by = "Year-Qtr_Offset1")
-    
-    # Third aggregation step (qtr_rev_agg_2) for merged data
-    qtr_rev_agg_2 <- plot_data() |> 
-      group_by(`Year-Qtr_Offset2`) |> 
-      summarize(
-        Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
-        .groups = "drop"
-      ) |> 
-      rename(Total_Rev_Offset2 = Total_Rev)
-    
-    merged_data_gdp$`Year-Qtr_Offset2` <- as.character(merged_data_gdp$`Year-Qtr_Offset2`)
-    qtr_rev_agg_2$`Year-Qtr_Offset2` <- as.character(qtr_rev_agg_2$`Year-Qtr_Offset2`)
-    
-    merged_data_gdp <- merged_data_gdp |> 
-      inner_join(qtr_rev_agg_2, by = "Year-Qtr_Offset2")
-    
-    return(merged_data_gdp)
-  })
-  
-  # GDP Sector Tab: Scatter Plot (using merged_data_gdp)
-  output$scatterPlotGDP <- renderPlot({
-    # Ensure merged data is available
-    merged_data_gdp_scatter <- merged_data_gdp()
+    merged_gdp
     
     # Get selected variables for X and Y axes
-    x_var <- input$scatter_x_var_gdp
-    y_var <- input$scatter_y_var_gdp
+    x_var <- input$line_x_var_gdp
     
-    # Plot the selected X and Y axis variables
-    ggplot(merged_data_gdp_scatter, aes_string(x = x_var, y = y_var)) +
-      geom_point(color = "darkblue") +
+    # 1. Fit the Linear Regression Model using the full dataset
+    lm_model <- lm(as.formula(paste("Total_Rev ~", x_var)), data = merged_gdp)
+    
+    # 2. Predicted values with confidence intervals for the entire dataset
+    predicted_vals <- predict(lm_model, merged_gdp, 
+                              interval = "confidence", level = 0.95)
+    
+    # Add predicted values and confidence intervals to the tibble
+    merged_gdp$Predicted_Rev <- predicted_vals[,1]  # Predicted values
+    merged_gdp$Lower_95 <- predicted_vals[,2]      # Lower bound of 95% CI
+    merged_gdp$Upper_95 <- predicted_vals[,3]      # Upper bound of 95% CI
+    
+    # 3. Create filtered tibble
+    merged_gdp_filtered <- merged_gdp |> 
+      filter(Year %in% c("2023", "2024"))
+    
+    # 4. Plot the Actual vs Predicted 
+    ggplot(merged_gdp, aes_string(x = "`Year-Qtr-Float`")) +  # Dynamically refer to x_var here
+      # Actual values for all data
+      geom_line(aes(y = Total_Rev), color = "blue", size = 1, alpha = 0.7, label = "Actual Total Revenue") +
+      # Predicted values starting at 2023
+      geom_line(data = merged_gdp_filtered, aes(y = Predicted_Rev), color = "red", linetype = "dashed", size = 1, alpha = 0.7, label = "Predicted Total Revenue") +
+      # Confidence intervals for the predicted values starting at 2023
+      geom_ribbon(data = merged_gdp_filtered, aes(ymin = Lower_95, ymax = Upper_95), alpha = 0.3, fill = "gray70") +
       labs(
-        title = glue("{x_var} vs {y_var}"),
-        x = x_var,
-        y = y_var
-      ) +
+        title = glue("Actual Revenue vs Predicted Revenue by Quarter (Predictor Var: {input$line_x_var})"),
+           x = "Year-Month", y = "Total Revenue") +
       theme_minimal() +
-      geom_smooth(method = lm, color = "forestgreen") +
-      theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 16, color = "#333333"))
+      theme(legend.position = "top", plot.title = element_text(face = "bold", size = 16)) +
+      scale_y_continuous(labels = scales::label_number(big.mark = ","))  # Format y-axis with commas for readability
+   
   })
   
   # GDP Sector Tab: Table with merged data
-  
-  gdp_exclude <- c("Year","Year-Qtr-Float","Year-Qtr_Offset1", "Year-Qtr_Offset2")
-  
   output$AggregatedDataTableGDP <- DT::renderDataTable({
+    
+    # Aggregating revenue by quarter
+    qtr_rev <- plot_data() |> 
+      group_by(`Year-Qtr`) |> 
+      summarize(
+        Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
+        .groups = "drop"
+      ) 
+    
+    gdp_exclude <- c("Year", "Year-Qtr-Float", "Year-Qtr_Offset1", "Year-Qtr_Offset2")
+    
+    # Merging the GDP data with aggregated quarterly revenue data
+    merged_gdp <- gdp |> 
+      inner_join(qtr_rev, by = "Year-Qtr")
+    
+    # Render the DataTable with proper formatting
     DT::datatable(
-      merged_data_gdp() |> 
-        select(-all_of(gdp_exclude)) |> 
-        mutate(across(where(is.numeric), ~ round(.x, 2))) |> 
-        mutate(across(where(is.numeric), ~ scales::comma(.x))),  # Add commas to numeric values
+      merged_gdp |> 
+        select(-all_of(gdp_exclude)),  # Exclude unnecessary columns
       options = list(
         pageLength = 5,
-        scrollX = TRUE   
+        scrollX = TRUE
       ),
       width = "100%"
     )
   })
   
+  
   # GDP Tab: Linear Regression Summary
   
   output$lmSummaryGDP <- renderPrint({
-    req(input$scatter_x_var_gdp, input$scatter_y_var_gdp)  # Ensure both variables are selected
+    qtr_rev <- plot_data() |> 
+      group_by(`Year-Qtr`) |> 
+      summarize(
+        Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
+        .groups = "drop"
+      ) 
     
-    # Get merged data (this will trigger the reactive block to compute it)
-    merged_data_gdp <- merged_data_gdp()
+    merged_gdp <- gdp |> 
+      inner_join(qtr_rev, by = "Year-Qtr")
     
-    lm_model_gdp <- lm(as.formula(paste(input$scatter_y_var_gdp, "~", input$scatter_x_var_gdp)), data = merged_data_gdp)
+    merged_gdp
     
-    summary(lm_model_gdp)
+    # Get selected variables for X and Y axes
+    x_var <- input$line_x_var_gdp
+    
+    # 1. Fit the Linear Regression Model using the full dataset
+    lm_model <- lm(as.formula(paste("Total_Rev ~", x_var)), data = merged_gdp)
+    
+    summary(lm_model)
   })
   
   # Economic Indicator Tab: Distribution of Total Rev (Filtered by Percentile Range)
@@ -233,7 +235,8 @@ function(input, output, session) {
       geom_line(data = merged_nongdp_filtered, aes(y = Predicted_Rev), color = "red", linetype = "dashed", size = 1, alpha = 0.7, label = "Predicted Total Revenue") +
       # Confidence intervals for the predicted values starting at 2023
       geom_ribbon(data = merged_nongdp_filtered, aes(ymin = Lower_95, ymax = Upper_95), alpha = 0.3, fill = "gray70") +
-      labs(title = "Actual vs Predicted Total Revenue (2023-2024)",
+      labs(
+        title = glue("Actual Revenue vs Predicted Revenue by Month (Predictor Var: {input$line_x_var})"),
            x = "Year-Month", y = "Total Revenue") +
       theme_minimal() +
       theme(legend.position = "top", plot.title = element_text(face = "bold", size = 16)) +
