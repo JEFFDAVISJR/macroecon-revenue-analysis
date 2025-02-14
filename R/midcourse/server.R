@@ -189,64 +189,56 @@ function(input, output, session) {
       scale_y_continuous(labels = scales::comma)  # Format y-axis numbers with commas
   })
   
-  # Economic Indicator Tab: Line Plot of Total Rev by Month (Grouped by Year)
+  # Economic Indicator Tab: LM Line plot with Dynamic X and Y-Axis Variables
   output$linePlot <- renderPlot({
-    title <- glue("Line Plot of ({input$S_Cons_Order_Class}) by Month within Sales Percentile Range: {input$slider2[1]}% - {input$slider2[2]}%")
-    
-    # Group data by Year, Month, and Order Class
-    aggregated_data <- plot_data() |> 
-      group_by(Year, Month, S_Cons_Order_Class) %>%
-      summarize(Total_Sales = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
-    
-    ggplot(aggregated_data, aes(x = Month, y = Total_Sales, group = S_Cons_Order_Class, color = as.factor(S_Cons_Order_Class))) + 
-      geom_line() +
-      geom_point() +
-      labs(
-        title = title,
-        y = "Total Rev",
-        x = "Month",
-        color = "Order Class" 
-      ) +
-      theme(
-        plot.title = element_text(face = "bold"),
-        axis.text.x = element_text(angle = 45, hjust = 1),
-        strip.text = element_text(size = 14, face = "bold", color = "darkblue")  # Customize Year label (facet label)
-      ) +
-      facet_wrap(~ Year, scales = "free_y")  # Add facet grid by Year and set free y-axis scale
-  })
-  
-  # Economic Indicator Tab: Scatter Plot with Dynamic X and Y-Axis Variables
-  output$scatterPlot <- renderPlot({
-    # Create month_rev from plot_data, filtered by Order Class and Percentile Range
-    month_rev <- plot_data() |> 
+    monthly_rev <- plot_data() |> 
       group_by(`Year-Month`) |> 
-      summarize(Total_Rev = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
+      summarize(
+        Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
+        .groups = "drop"
+      ) 
     
-    # Merge month_rev with non_gdp dataset using Year-Month as common key
-    merged_data_nongdp <- non_gdp |> 
-      inner_join(month_rev, by = "Year-Month", suffix = c("_non_gdp", "_month_rev"))
-    merged_data_nongdp <- merged_data_nongdp |> 
-      inner_join(month_rev, by = c("Year-Month_Offset1" = "Year-Month"), suffix = c("", "_Offset1")) %>%
-      rename(Total_Rev_Offset1 = Total_Rev_Offset1)
-    merged_data_nongdp <- merged_data_nongdp |> 
-      inner_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2")) %>%
-      rename(Total_Rev_Offset2 = Total_Rev_Offset2)
+    merged_nongdp <- non_gdp |> 
+      inner_join(monthly_rev, by = "Year-Month")
+    
+    merged_nongdp$`Year-Month-No` <- as.Date(paste0(merged_nongdp$`Year-Month-No`, "-01"), format="%Y-%m-%d")
+    
+    merged_nongdp <- merged_nongdp |> 
+      mutate(Year = year(`Year-Month-No`))
     
     # Get selected variables for X and Y axes
-    x_var <- input$scatter_x_var
-    y_var <- input$scatter_y_var
+    line_x_var <- input$line_x_var
     
-    # Plot the selected X and Y axis variables
-    ggplot(merged_data_nongdp, aes_string(x = x_var, y = y_var)) +
-      geom_point(color = "darkblue") +
-      labs(
-        title = glue("{x_var} vs {y_var}"),
-        x = x_var,
-        y = y_var
-      ) +
+    # 1. Fit the Linear Regression Model using the full dataset
+    lm_model <- lm(as.formula(paste("Total_Rev ~", line_x_var)), data = merged_nongdp)
+    
+    # 2. Predicted values with confidence intervals for the entire dataset
+    predicted_vals <- predict(lm_model, merged_nongdp, 
+                              interval = "confidence", level = 0.95)
+    
+    # Add predicted values and confidence intervals to the tibble
+    merged_nongdp$Predicted_Rev <- predicted_vals[,1]  # Predicted values
+    merged_nongdp$Lower_95 <- predicted_vals[,2]      # Lower bound of 95% CI
+    merged_nongdp$Upper_95 <- predicted_vals[,3]      # Upper bound of 95% CI
+    
+    # 3. Create a new tibble for the plot, where we filter for 2023 and 2024 for predictions
+    merged_nongdp_filtered <- merged_nongdp %>%
+      filter(Year %in% c("2023", "2024"))
+    
+    # 4. Plot the Actual vs Predicted values, with actual values showing for all years and predicted starting at 2023
+    ggplot(merged_nongdp, aes(x = `Year-Month-No`, y = Total_Rev)) +
+      # Actual values for all data
+      geom_line(color = "blue", size = 1, alpha = 0.7, label = "Actual Total Revenue") +
+      # Predicted values starting at 2023
+      geom_line(data = merged_nongdp_filtered, aes(y = Predicted_Rev), color = "red", linetype = "dashed", size = 1, alpha = 0.7, label = "Predicted Total Revenue") +
+      # Confidence intervals for the predicted values starting at 2023
+      geom_ribbon(data = merged_nongdp_filtered, aes(ymin = Lower_95, ymax = Upper_95), alpha = 0.3, fill = "gray70") +
+      labs(title = "Actual vs Predicted Total Revenue (2023-2024)",
+           x = "Year-Month", y = "Total Revenue") +
       theme_minimal() +
-      geom_smooth(method = lm) +
-      theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 16, color = "#333333"))
+      theme(legend.position = "top", plot.title = element_text(face = "bold", size = 16)) +
+      scale_y_continuous(labels = scales::label_number(big.mark = ","))  # Format y-axis with commas for readability
+    
   })
   
   # Economic Indicator Tab: Underlying Data Table for Scatter Plot
@@ -257,12 +249,6 @@ function(input, output, session) {
     
     merged_data_nongdp <- non_gdp |> 
       inner_join(month_rev, by = "Year-Month", suffix = c("_non_gdp", "_month_rev"))
-    merged_data_nongdp <- merged_data_nongdp |> 
-      inner_join(month_rev, by = c("Year-Month_Offset1" = "Year-Month"), suffix = c("", "_Offset1")) %>%
-      rename(Total_Rev_Offset1 = Total_Rev_Offset1)
-    merged_data_nongdp <- merged_data_nongdp |> 
-      inner_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2")) %>%
-      rename(Total_Rev_Offset2 = Total_Rev_Offset2)
     
     nongdp__exclude_columns <- c("Year","Month","Year-Month-No","MonthNo","Year-Month-No-Float","Year-Month_Offset1", "Year-Month_Offset2")
     
@@ -278,27 +264,26 @@ function(input, output, session) {
 
   # Economic Indicator Tab: Linear Regression Summary
   output$lmSummary <- renderPrint({
-    req(input$scatter_x_var, input$scatter_y_var)  # Ensure both variables are selected
-    
-    # Get the selected variables for X and Y from the user input
-    x_var <- input$scatter_x_var
-    y_var <- input$scatter_y_var
-    
-    # Create month-level revenue summary
-    month_rev <- plot_data() |> 
+    monthly_rev <- plot_data() |> 
       group_by(`Year-Month`) |> 
-      summarize(Total_Rev = sum(`Total Rev`, na.rm = TRUE), .groups = "drop")
+      summarize(
+        Total_Rev = sum(`Total Rev`, na.rm = TRUE), 
+        .groups = "drop"
+      ) 
     
-    # Merge the data for revenue and GDP offsets
-    merged_data <- non_gdp |> 
-      inner_join(month_rev, by = "Year-Month", suffix = c("_non_gdp", "_month_rev")) %>%
-      inner_join(month_rev, by = c("Year-Month_Offset1" = "Year-Month"), suffix = c("", "_Offset1")) %>%
-      rename(Total_Rev_Offset1 = Total_Rev_Offset1) %>%
-      inner_join(month_rev, by = c("Year-Month_Offset2" = "Year-Month"), suffix = c("", "_Offset2")) %>%
-      rename(Total_Rev_Offset2 = Total_Rev_Offset2)
+    merged_nongdp <- non_gdp |> 
+      inner_join(monthly_rev, by = "Year-Month")
     
-    # lm model
-    lm_model <- lm(as.formula(paste(y_var, "~", x_var)), data = merged_data)
+    merged_nongdp$`Year-Month-No` <- as.Date(paste0(merged_nongdp$`Year-Month-No`, "-01"), format="%Y-%m-%d")
+    
+    merged_nongdp <- merged_nongdp |> 
+      mutate(Year = year(`Year-Month-No`))
+    
+    # Get selected variables for X and Y axes
+    line_x_var <- input$line_x_var
+    
+    # 1. Fit the Linear Regression Model using the full dataset
+    lm_model <- lm(as.formula(paste("Total_Rev ~", line_x_var)), data = merged_nongdp)
     
     # Return lm model
     summary(lm_model)

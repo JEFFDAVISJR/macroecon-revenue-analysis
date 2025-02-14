@@ -8,6 +8,7 @@ library(scales)
 library(forecast)
 library(ggplot2)
 library(lubridate)
+library(rlang)
 
 sales <- read_csv("./data/read_summarized_sales_clean_new.csv")
 sales <- sales %>%

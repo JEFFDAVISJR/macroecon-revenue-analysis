@@ -36,17 +36,9 @@ fluidPage(
                  # Conditional drop down (Monthly Economic Indicator tab x-axis var/scatter plot)
                  conditionalPanel(
                    condition = "input.tabs == 'Linear Regression (Monthly)'",  # Show on Monthly Economic Indicator tab
-                   selectInput("scatter_x_var", 
+                   selectInput("line_x_var", 
                                label = "Select Variable for X-Axis", 
                                choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment"))
-                 ),
-                 
-                 # Conditional drop down (Monthly Economic Indicator tab y-axis var/scatter plot) 
-                 conditionalPanel(
-                   condition = "input.tabs == 'Linear Regression (Monthly)'",  # Show on Monthly Economic Indicator tab
-                   selectInput("scatter_y_var", 
-                               label = "Select Variable for Y-Axis", 
-                               choices = c("Total_Rev", "Total_Rev_Offset1", "Total_Rev_Offset2"))
                  ),
                  
                  # Conditional drop down (Quarterly Economic Indicators tab x-axis var/scatter plot)
@@ -151,8 +143,8 @@ fluidPage(
                       column(width = 12,
                              div(
                                style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
-                               plotOutput("scatterPlot", height = "300px")
-                             ))  # scatter plot with border wrapped in div
+                               plotOutput("linePlot", height = "300px")
+                             ))  #
                     ),
                     
                     # Table below scatter
