@@ -211,36 +211,80 @@ function(input, output, session) {
     # Get selected variables for X and Y axes
     line_x_var <- input$line_x_var
     
-    # 1. Fit the Linear Regression Model using the full dataset
+    # 1. Fit the lm
     lm_model <- lm(as.formula(paste("Total_Rev ~", line_x_var)), data = merged_nongdp)
     
-    # 2. Predicted values with confidence intervals for the entire dataset
-    predicted_vals <- predict(lm_model, merged_nongdp, 
-                              interval = "confidence", level = 0.95)
+    # 2. Predicted values with confidence intervals for the entire dataset (95% CI)
+    predicted_vals_95 <- predict(lm_model, merged_nongdp, 
+                                 interval = "prediction", level = 0.95)
     
-    # Add predicted values and confidence intervals to the tibble
-    merged_nongdp$Predicted_Rev <- predicted_vals[,1]  # Predicted values
-    merged_nongdp$Lower_95 <- predicted_vals[,2]      # Lower bound of 95% CI
-    merged_nongdp$Upper_95 <- predicted_vals[,3]      # Upper bound of 95% CI
+    # Add 95% confidence intervals to the tibble
+    merged_nongdp$Predicted_Rev <- predicted_vals_95[,1]  # Predicted values
+    merged_nongdp$Lower_95 <- predicted_vals_95[,2]      # Lower bound of 95% CI
+    merged_nongdp$Upper_95 <- predicted_vals_95[,3]      # Upper bound of 95% CI
+    
+    # 2. Predicted values with confidence intervals for the entire dataset (80% CI)
+    predicted_vals_80 <- predict(lm_model, merged_nongdp, 
+                                 interval = "prediction", level = 0.80)
+    
+    # Add 80% confidence intervals to the tibble
+    merged_nongdp$Lower_80 <- predicted_vals_80[,2]      # Lower bound of 80% CI
+    merged_nongdp$Upper_80 <- predicted_vals_80[,3]      # Upper bound of 80% CI
     
     # 3. Create a new tibble for the plot, where we filter for 2023 and 2024 for predictions
     merged_nongdp_filtered <- merged_nongdp %>%
       filter(Year %in% c("2023", "2024"))
     
-    # 4. Plot the Actual vs Predicted values, with actual values showing for all years and predicted starting at 2023
-    ggplot(merged_nongdp, aes(x = `Year-Month-No`, y = Total_Rev)) +
-      # Actual values for all data
-      geom_line(color = "blue", size = 1, alpha = 0.7, label = "Actual Total Revenue") +
-      # Predicted values starting at 2023
-      geom_line(data = merged_nongdp_filtered, aes(y = Predicted_Rev), color = "red", linetype = "dashed", size = 1, alpha = 0.7, label = "Predicted Total Revenue") +
-      # Confidence intervals for the predicted values starting at 2023
-      geom_ribbon(data = merged_nongdp_filtered, aes(ymin = Lower_95, ymax = Upper_95), alpha = 0.3, fill = "gray70") +
+    # 4. Plot the Actual vs Predicted values
+    ggplot() +
+      # Plot actual
+      geom_line(data = merged_nongdp |> 
+                  filter(Year <= 2024),
+                aes(x = `Year-Month-No`, y = Total_Rev),
+                color = "blue", size = 1) +  # Set color and line thickness for clarity
+      
+      # Plot predicted
+      geom_line(data = merged_nongdp_filtered, 
+                aes(x = `Year-Month-No`, y = Predicted_Rev), 
+                linetype = "dashed", color = "red", size = 1) +  # Dashed line for predicted values
+      
+      # Confidence intervals (95%)
+      geom_ribbon(data = merged_nongdp_filtered, 
+                  aes(x = `Year-Month-No`, ymin = Lower_95, ymax = Upper_95), 
+                  alpha = 0.3, fill = "gray80") +  # 95% confidence interval
+      
+      # Confidence intervals (80%)
+      geom_ribbon(data = merged_nongdp_filtered, 
+                  aes(x = `Year-Month-No`, ymin = Lower_80, ymax = Upper_80), 
+                  alpha = 0.3, fill = "gray70") +  # 80% confidence interval
+      
       labs(
         title = glue("Actual Revenue vs Predicted Revenue by Month (Predictor Var: {input$line_x_var})"),
-           x = "Year-Month", y = "Total Revenue") +
+        x = "Year-Month", y = "Total Revenue"
+      ) +
       theme_minimal() +
       theme(legend.position = "top", plot.title = element_text(face = "bold", size = 16)) +
-      scale_y_continuous(labels = scales::label_number(big.mark = ","))  # Format y-axis with commas for readability
+      scale_y_continuous(labels = scales::label_number(big.mark = ","), 
+                         limits = c(200000, NA)) +  # Set the lower limit to 200,000
+      
+      # Formatting x-axis 
+      scale_x_date(labels = date_format("%b %Y"), breaks = "3 months") +
+      
+      # Theme
+      theme_minimal(base_size = 15) +
+      theme(
+        plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+        axis.title.x = element_blank(),  # Remove x-axis label
+        axis.title.y = element_text(face = "bold", size = 14),
+        axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better fit
+        axis.text.y = element_text(size = 12),
+        legend.position = "bottom"  # Position legend at the bottom if applicable
+      ) +
+      labs(
+        title = glue("Actual Revenue vs Predicted Revenue by Month (Predictor Var: {input$line_x_var})"),
+        x = "Month",
+        y = "Total Revenue (USD)"
+      )
     
   })
   
@@ -481,13 +525,13 @@ function(input, output, session) {
   })
     # Monthly ARIMA Tab: Arima Model Results_Plot
   output$Arima_Monthly_Plot <- renderPlot({
-    req(input$monthly_x_reg)  # Ensure input is available
+    req(input$line_x_var)  # Ensure input is available
     
     # Debugging print statement (optional)
-    print(input$monthly_x_reg)  # Print to check input
+    print(input$line_x_var)  # Print to check input
     
     # Get the selected variable for X from user input
-    x_var_monthly <- input$monthly_x_reg
+    line_x_var <- input$line_x_var
     
     # Create month-level revenue summary
     monthly_rev <- plot_data() |> 
@@ -510,23 +554,24 @@ function(input, output, session) {
       arrange(Year, MonthNo) |> 
       filter(Year < cutoff_year)
     
+    # Create time series data using the selected variable
     m_total_rev_ts <- ts(model_tib_ngdp$Total_Rev, start = min(model_tib_ngdp$Year), frequency = 12)
-    x_reg_ts <- ts(model_tib_ngdp[[input$monthly_x_reg]], start = min(model_tib_ngdp$Year), frequency = 12)
+    x_reg_ts <- ts(model_tib_ngdp[[line_x_var]], start = min(model_tib_ngdp$Year), frequency = 12)
     
     # Fit Monthly ARIMA model
     n_gdp_sales_model <- auto.arima(
       m_total_rev_ts, 
-      xreg = log(x_reg_ts)
+      xreg = x_reg_ts
     )
     
     future_x_reg <- merged_nongdp |> 
       arrange(Year) |> 
       filter(Year >= cutoff_year) |>
       filter(Year <= 2024) |> 
-      pull(input$monthly_x_reg)
+      pull(line_x_var)  # Make sure to use the selected variable here
     
     forecasted_values <- forecast(n_gdp_sales_model, 
-                                  xreg = log(future_x_reg)
+                                  xreg = future_x_reg
     )
     
     start_year <- 2023
@@ -569,13 +614,13 @@ function(input, output, session) {
                   aes(x = months, ymin = Lower_80, ymax = Upper_80),
                   alpha = 0.3, fill = "gray70") +  # 80% confidence interval
       
-      # 
+      # Format Y axis with commas for readability
       scale_y_continuous(labels = label_number(big.mark = ",")) +
       
-      # 
+      # Format X axis with monthly breaks
       scale_x_date(labels = date_format("%b %Y"), breaks = "3 months") +  
       
-      # 
+      # Apply theme settings
       theme_minimal(base_size = 15) +
       theme(
         plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
@@ -586,9 +631,8 @@ function(input, output, session) {
         legend.position = "bottom"  # Position legend at the bottom if applicable
       ) +
       
-      
       labs(
-        title = glue("Actual Revenue vs Predicted Revenue by Month (Predictor Var: {input$monthly_x_reg})"),
+        title = glue("Actual Revenue vs Predicted Revenue by Month (Predictor Var: {line_x_var})"),
         x = "Month",
         y = "Total Revenue (USD)"
       )
@@ -611,25 +655,31 @@ function(input, output, session) {
     # Convert Year-Month column to Date object
     merged_nongdp$`Year-Month-No` <- as.Date(paste(merged_nongdp$`Year-Month-No`, "01", sep = "-"), format = "%Y-%m-%d")
     
-    
-    #Use data before the cutoff year to fit the model
-    
-    cutoff_year = 2023
-    
+    # 
     model_tib_ngdp <- merged_nongdp |> 
-      arrange(Year, MonthNo) |> 
-      filter(Year < cutoff_year)
+      arrange(Year, MonthNo)
     
+    # Prepare time series
     m_total_rev_ts <- ts(model_tib_ngdp$Total_Rev, start = min(model_tib_ngdp$Year), frequency = 12)
-    x_reg_ts <- ts(model_tib_ngdp[[input$monthly_x_reg]], start = min(model_tib_ngdp$Year), frequency = 12)
+    x_reg_ts <- ts(model_tib_ngdp[[input$line_x_var]], start = min(model_tib_ngdp$Year), frequency = 12)
     
-    # Fit Monthly monthly ARIMA model
+    # Fit the ARIMA model on the full dataset
     n_gdp_sales_model <- auto.arima(
       m_total_rev_ts, 
-      xreg = log(x_reg_ts)
+      xreg = x_reg_ts
     )
     
-    coeftest(n_gdp_sales_model)
+    # Get the ARIMA model coefficients
+    coeftest_output <- coeftest(n_gdp_sales_model)
+    
+    # Get the ARIMA model summary
+    model_summary <- summary(n_gdp_sales_model)
+    
+    # Print both outputs as a list
+    list(
+      "ARIMA Model Coefficients" = coeftest_output,
+      "ARIMA Model Summary" = model_summary
+    )
   })
   
   # Monthly Arima Model Tab: Table with underlying Arima data

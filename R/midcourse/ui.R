@@ -35,7 +35,7 @@ fluidPage(
                  
                  # Conditional drop down (Monthly Economic Indicator tab x-axis var/scatter plot)
                  conditionalPanel(
-                   condition = "input.tabs == 'Linear Regression (Monthly)'",  # Show on Monthly Economic Indicator tab
+                   condition = "input.tabs == 'LM v ARIMA (Monthly)'",  # Show on Monthly Economic Indicator tab
                    selectInput("line_x_var", 
                                label = "Select Variable for X-Axis", 
                                choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment"))
@@ -52,14 +52,6 @@ fluidPage(
                                            "Other_Trans_Support_Activity", "Pipeline_Transportation", "Professional_Business_Services", 
                                            "Rail_Transportation", "Retail_Trade", "State_Local", "Transit_Ground_Trans", "Truck_Trans", 
                                            "Utilities", "Warehousing_Storage", "Water_Trans", "Wholesale_Trade", "GDP_Total"))
-                 ),
-          
-                 # Conditional drop down (Monthly Arima Model X-reg)
-                 conditionalPanel(
-                   condition = "input.tabs == 'ARIMA (Monthly)'",  
-                   selectInput("monthly_x_reg", 
-                               label = "Select Variable", 
-                               choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment"))
                  ),
                  
                  # Conditional drop down (Quarterly Arima Model x-reg var)
@@ -78,7 +70,7 @@ fluidPage(
                  
                  # Conditional display (Monthly Economic Indicators linear regression model summary)
                  conditionalPanel(
-                   condition = "input.tabs == 'Linear Regression (Monthly)'",  # Only show in Monthly Economic Indicator tab
+                   condition = "input.tabs == 'LM v ARIMA (Monthly)'",  # Only show in Monthly Economic Indicator tab
                    fluidRow(
                      column(width = 12,
                             tags$strong("Linear Regression Summary"),
@@ -110,7 +102,7 @@ fluidPage(
                  ),
                  # Conditional display (Monthly ARIMA Model sidebar summary)
                  conditionalPanel(
-                   condition = "input.tabs == 'ARIMA (Monthly)'",
+                   condition = "input.tabs == 'LM v ARIMA (Monthly)'",
                    fluidRow(
                      column(width = 12,
                             tags$strong("ARIMA Model Summary"),
@@ -126,19 +118,24 @@ fluidPage(
                   
                   # Monthly Economic Indicators
                   tabPanel(
-                    "Linear Regression (Monthly)", 
+                    "LM v ARIMA (Monthly)",
                     fluidRow(
                       column(width = 12,
-                             div(class = "plot-container", plotOutput("distPlot")))  # dist plot
-                    ),
-                    fluidRow(
-                      column(width = 12,
+                            tags$strong("Linear Model Monthly Results"),
                              div(
                                style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
-                               plotOutput("linePlot", height = "300px")
-                             ))  #
+                               plotOutput("linePlot", height = "375px")
+                             )) 
                     ),
-                    
+
+                      fluidRow(
+                        column(width = 12,
+                               tags$strong("ARIMA Model Monthly Results"),
+                               div(
+                                 style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
+                                 plotOutput("Arima_Monthly_Plot", height = "375px")
+                               )) 
+                      ),
                     # Table below scatter
                     fluidRow(
                       column(width = 12,
@@ -172,24 +169,6 @@ fluidPage(
                     )
                   ),
                   
-                  # Forecast Model (Monthly)
-                  tabPanel(
-                    "ARIMA (Monthly)",
-                    fluidRow(
-                      column(width = 12,
-                             tags$strong("ARIMA Model Monthly Results"),
-                             plotOutput("Arima_Monthly_Plot")  # Placeholder for ARIMA plot for monthly data
-                      )
-                    ),
-                    fluidRow(
-                      column(width = 12,
-                             tags$strong("ARIMA Model Monthly Underlying Data"),
-                             DT::dataTableOutput("AggregatedDataTable_Monthly_Arima")  # Table for monthly ARIMA data
-                      )
-                    )
-                    
-                  ),
-                  
                   # Forecast Model (Quarterly)
                   tabPanel(
                     "ARIMA (Quarterly)",
@@ -197,6 +176,24 @@ fluidPage(
                       column(width = 12,
                              tags$strong("ARIMA Model Results"),
                              plotOutput("arimaPlot")  # Placeholder for ARIMA plot
+                      )
+                    ),
+                    fluidRow(
+                      column(width = 12,
+                             tags$strong("ARIMA Model Underlying Data"),
+                             DT::dataTableOutput("AggregatedDataTable_GDP_Arima")  # Table for ARIMA data
+                      )
+                    )
+                    
+                  ),
+                  
+                  # Histogram
+                  tabPanel(
+                    "Revenue Distribution",
+                    fluidRow(
+                      column(width = 12,
+                             tags$strong("Distribution of Revenue"),
+                             plotOutput("distPlot") 
                       )
                     ),
                     fluidRow(
