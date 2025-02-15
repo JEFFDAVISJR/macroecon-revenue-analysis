@@ -111,7 +111,8 @@ fluidPage(
                              div(
                                style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
                                plotOutput("linePlot", height = "375px")
-                             )) 
+                             )),
+                      style = "margin-top: 10px"
                     ),
                     
                     fluidRow(
@@ -120,14 +121,18 @@ fluidPage(
                              div(
                                style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
                                plotOutput("Arima_Monthly_Plot", height = "375px")
-                             )) 
+                             )),
+                      style = "margin-top: 10px"
                     ),
+                   
+                  
                     # Table below scatter
                     fluidRow(
                       column(width = 12,
-                             tags$strong("Underlying Scatter Plot Data"),
+                             #tags$strong("Underlying Scatter Plot Data"),
                              DT::dataTableOutput("aggregatedDataTable") 
-                      )
+                      ),
+                      style = "margin-top: 30px"
                     )
                   ),
                   
@@ -139,24 +144,27 @@ fluidPage(
                              tags$strong("Linear Model Results (Quarterly)"),
                              div(
                                style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
-                               plotOutput("linePlotGDP", height = "300px")
-                             ))  
+                               plotOutput("linePlotGDP", height = "375px")
+                             )),
+                      style = "margin-top: 10px"
                     ),
                     fluidRow(
                       column(width = 12,
                              tags$strong("ARIMA Results (Quarterly)"),
                              div(
                                style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
-                               plotOutput("arimaPlot", height = "300px")
-                             ))  
+                               plotOutput("arimaPlot", height = "375px")
+                             )),
+                      style = "margin-top: 10px"
                     ),
                     
                     # Table below scatter
                     fluidRow(
                       column(width = 12,
-                             tags$strong("Underlying Scatter Plot Data"),
+                            #tags$strong("Underlying Scatter Plot Data"),
                              DT::dataTableOutput("AggregatedDataTableGDP") 
-                      )
+                      ),
+                      style = "margin-top:10px"
                     )
                   ),
                   

@@ -124,7 +124,7 @@ function(input, output, session) {
       geom_ribbon(data = merged_gdp_filtered, aes(ymin = Lower_80, ymax = Upper_80), alpha = 0.3, fill = "gray70") +
       
       labs(
-        title = glue("Actual Revenue vs Predicted Revenue by Quarter (Predictor Var: {input$line_x_var})"),
+        title = glue("Actual Revenue vs Predicted Revenue by Quarter (Predictor Var: {x_var})"),
         y = "Total Revenue (USD)"
       ) +
       
@@ -479,7 +479,7 @@ function(input, output, session) {
       
       # Title
       labs(
-        title = glue("Actual Revenue vs Predicted Revenue by Quarter (Predictor Var: {input$line_x_var_GDP})"),
+        title = glue("Actual Revenue vs Predicted Revenue by Quarter (Predictor Var: {x_var})"),
         y = "Total Revenue (USD)"
       )
     
