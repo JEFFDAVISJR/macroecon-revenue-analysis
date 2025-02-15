@@ -35,7 +35,7 @@ fluidPage(
                  
                  # Conditional drop down (Monthly Economic Indicator tab x-axis var/scatter plot)
                  conditionalPanel(
-                   condition = "input.tabs == 'LM v ARIMA (Monthly)'",  # Show on Monthly Economic Indicator tab
+                   condition = "input.tabs == 'Model Comparison (Monthly)'",  # Show on Monthly Economic Indicator tab
                    selectInput("line_x_var", 
                                label = "Select Variable for X-Axis", 
                                choices = c("New_Jobs", "CCI", "Fed_Funds_Rate", "Jet_Fuel", "Unemployment"))
@@ -43,7 +43,7 @@ fluidPage(
                  
                  # Conditional drop down (Quarterly Economic Indicators tab x-axis var/line plot)
                  conditionalPanel(
-                   condition = "input.tabs == 'Linear Regression (Quarterly)'",  
+                   condition = "input.tabs == 'Model Comparison (Quarterly)'",  
                    selectInput("line_x_var_gdp", 
                                label = "Select Variable for X-Axis", 
                                choices = c("Accommodation_Food_Services", "Agriculture_FFH", "Air_Trans", "Arts_Entertainment_Rec", 
@@ -54,23 +54,9 @@ fluidPage(
                                            "Utilities", "Warehousing_Storage", "Water_Trans", "Wholesale_Trade", "GDP_Total"))
                  ),
                  
-                 # Conditional drop down (Quarterly Arima Model x-reg var)
-                 conditionalPanel(
-                   condition = "input.tabs == 'ARIMA (Quarterly)'",  
-                   selectInput("scatter_x_reg", 
-                               label = "Select Variable", 
-                               choices = c("Accommodation_Food_Services", "Agriculture_FFH", "Air_Trans", "Arts_Entertainment_Rec", 
-                                           "Construction", "Educational_Health_Social", "Federal", "Finance_Ins_RealEstate", 
-                                           "Information", "Manufacturing", "Mining", "Other_Services_Not_Government", 
-                                           "Other_Trans_Support_Activity", "Pipeline_Transportation", "Professional_Business_Services", 
-                                           "Rail_Transportation", "Retail_Trade", "State_Local", "Transit_Ground_Trans", "Truck_Trans", 
-                                           "Utilities", "Warehousing_Storage", "Water_Trans", "Wholesale_Trade", "GDP_Total"))
-                   
-                 ),
-                 
                  # Conditional display (Monthly Economic Indicators linear regression model summary)
                  conditionalPanel(
-                   condition = "input.tabs == 'LM v ARIMA (Monthly)'",  # Only show in Monthly Economic Indicator tab
+                   condition = "input.tabs == 'Model Comparison (Monthly)'",  # Only show in Monthly Economic Indicator tab
                    fluidRow(
                      column(width = 12,
                             tags$strong("Linear Regression Summary"),
@@ -81,7 +67,7 @@ fluidPage(
                  
                  # Conditional display (Quarterly Economic Indicators linear regression model summary)
                  conditionalPanel(
-                   condition = "input.tabs == 'Linear Regression (Quarterly)'",  # Only show in Quarterly Economic Indicator (GDP) tab
+                   condition = "input.tabs == 'Model Comparison (Quarterly)'",  # Only show in Quarterly Economic Indicator (GDP) tab
                    fluidRow(
                      column(width = 12,
                             tags$strong("Linear Regression Summary"),
@@ -92,7 +78,7 @@ fluidPage(
                  
                  # Conditional display (Monthly ARIMA Model sidebar summary)
                  conditionalPanel(
-                   condition = "input.tabs == 'ARIMA (Quarterly)'",
+                   condition = "input.tabs == 'Model Comparison (Quarterly)'",
                    fluidRow(
                      column(width = 12,
                             tags$strong("ARIMA Model Summary"),
@@ -102,7 +88,7 @@ fluidPage(
                  ),
                  # Conditional display (Monthly ARIMA Model sidebar summary)
                  conditionalPanel(
-                   condition = "input.tabs == 'LM v ARIMA (Monthly)'",
+                   condition = "input.tabs == 'Model Comparison (Monthly)'",
                    fluidRow(
                      column(width = 12,
                             tags$strong("ARIMA Model Summary"),
@@ -116,26 +102,26 @@ fluidPage(
     mainPanel(
       tabsetPanel(id = "tabs",  # Assign an id to the tabsetPanel for reference in conditionalPanel
                   
-                  # Monthly Economic Indicators
+                  # Model Comparison (Monthly)
                   tabPanel(
-                    "LM v ARIMA (Monthly)",
+                    "Model Comparison (Monthly)",
                     fluidRow(
                       column(width = 12,
-                            tags$strong("Linear Model Monthly Results"),
+                             tags$strong("Linear Model Monthly Results"),
                              div(
                                style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
                                plotOutput("linePlot", height = "375px")
                              )) 
                     ),
-
-                      fluidRow(
-                        column(width = 12,
-                               tags$strong("ARIMA Model Monthly Results"),
-                               div(
-                                 style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
-                                 plotOutput("Arima_Monthly_Plot", height = "375px")
-                               )) 
-                      ),
+                    
+                    fluidRow(
+                      column(width = 12,
+                             tags$strong("ARIMA Model Monthly Results"),
+                             div(
+                               style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
+                               plotOutput("Arima_Monthly_Plot", height = "375px")
+                             )) 
+                    ),
                     # Table below scatter
                     fluidRow(
                       column(width = 12,
@@ -145,19 +131,24 @@ fluidPage(
                     )
                   ),
                   
-                  # Quarterly Economic Indicators
+                  # Model Comparison (Quarterly)
                   tabPanel(
-                    "Linear Regression (Quarterly)",
+                    "Model Comparison (Quarterly)",
                     fluidRow(
                       column(width = 12,
-                             div(class = "plot-container", plotOutput("distPlotGDP")))  # Same histogram here
-                    ),
-                    fluidRow(
-                      column(width = 12,
+                             tags$strong("Linear Model Results (Quarterly)"),
                              div(
                                style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
                                plotOutput("linePlotGDP", height = "300px")
-                             ))  # scatter plot with border wrapped in div
+                             ))  
+                    ),
+                    fluidRow(
+                      column(width = 12,
+                             tags$strong("ARIMA Results (Quarterly)"),
+                             div(
+                               style = "border: 2px solid #007bff; padding: 10px; background-color: #f7f7f7; border-radius: 8px;", 
+                               plotOutput("arimaPlot", height = "300px")
+                             ))  
                     ),
                     
                     # Table below scatter
@@ -169,45 +160,22 @@ fluidPage(
                     )
                   ),
                   
-                  # Forecast Model (Quarterly)
+                  # Revenue Distribution tab
                   tabPanel(
-                    "ARIMA (Quarterly)",
+                    "Revenue Distribution", 
                     fluidRow(
                       column(width = 12,
-                             tags$strong("ARIMA Model Results"),
-                             plotOutput("arimaPlot")  # Placeholder for ARIMA plot
-                      )
-                    ),
-                    fluidRow(
-                      column(width = 12,
-                             tags$strong("ARIMA Model Underlying Data"),
-                             DT::dataTableOutput("AggregatedDataTable_GDP_Arima")  # Table for ARIMA data
+                             div(class = "plot-container", plotOutput("distPlotGDP")))
+
                       )
                     )
-                    
-                  ),
                   
-                  # Histogram
-                  tabPanel(
-                    "Revenue Distribution",
-                    fluidRow(
-                      column(width = 12,
-                             tags$strong("Distribution of Revenue"),
-                             plotOutput("distPlot") 
-                      )
-                    ),
-                    fluidRow(
-                      column(width = 12,
-                             tags$strong("ARIMA Model Underlying Data"),
-                             DT::dataTableOutput("AggregatedDataTable_GDP_Arima")  # Table for ARIMA data
-                      )
-                    )
-                    
-                  )
+      
       )  
     )  
   )  
 )
+
 
 
 

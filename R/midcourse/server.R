@@ -38,13 +38,13 @@ function(input, output, session) {
   
   # GDP Sector Tab: Distribution of Total Rev for GDP (Filtered by Percentile Range)
   output$distPlotGDP <- renderPlot({
-    req(input$tabs == "Linear Regression (Quarterly)")  # Ensure the tab is active
+    req(input$tabs == "Revenue Distribution")  # Ensure the tab is active
     
     title <- glue("Distribution of {input$S_Cons_Order_Class} within Sales Percentile Range: {input$slider2[1]}% - {input$slider2[2]}%")
     
     plot_data() |> 
       ggplot(aes(x = `Total Rev`)) +  
-      geom_histogram(bins = 50, fill = "#4C9F70", color = "white", alpha = 0.7) +  # Color with border
+      geom_histogram(bins = 50, fill = "#1F77B4", color = "white", alpha = 0.7) +  # Blue color with white border
       ggtitle(title) +
       theme_minimal(base_size = 15) +  # Clean theme
       theme(
@@ -56,11 +56,16 @@ function(input, output, session) {
         panel.grid.major = element_line(color = "#eeeeee"),  # Lighter grid lines
         panel.grid.minor = element_blank()  # No minor grid lines
       ) + 
-      scale_x_continuous(
-        labels = scales::comma  # Format x-axis
-      ) +
-      scale_y_continuous(labels = scales::comma)  # Format y-axis numbers with commas
+      scale_x_continuous(labels = scales::comma) +  # Format x-axis with commas
+      scale_y_continuous(labels = scales::comma) +  # Format y-axis with commas
+      labs(
+        x = "Total Revenue",  # Customize x-axis label here
+        y = "Frequency",      # Customize y-axis label if needed
+        title = title
+      )
   })
+  
+  
 
   # GDP Sector Tab: LM Line Plot 
   output$linePlotGDP <- renderPlot({
@@ -74,42 +79,69 @@ function(input, output, session) {
     merged_gdp <- gdp |> 
       inner_join(qtr_rev, by = "Year-Qtr")
     
-    merged_gdp
+    merged_gdp <- merged_gdp |> 
+      filter(Year < 2024)
     
-    # Get selected variables for X and Y axes
     x_var <- input$line_x_var_gdp
     
     # 1. Fit the Linear Regression Model using the full dataset
     lm_model <- lm(as.formula(paste("Total_Rev ~", x_var)), data = merged_gdp)
     
-    # 2. Predicted values with confidence intervals for the entire dataset
-    predicted_vals <- predict(lm_model, merged_gdp, 
-                              interval = "confidence", level = 0.95)
+    # 2. Predicted values with confidence intervals for the entire dataset (95% CI)
+    predicted_vals_95 <- predict(lm_model, merged_gdp, 
+                                 interval = "prediction", level = 0.95)
     
-    # Add predicted values and confidence intervals to the tibble
-    merged_gdp$Predicted_Rev <- predicted_vals[,1]  # Predicted values
-    merged_gdp$Lower_95 <- predicted_vals[,2]      # Lower bound of 95% CI
-    merged_gdp$Upper_95 <- predicted_vals[,3]      # Upper bound of 95% CI
+    # Add predicted values and confidence intervals (95%) to the tibble
+    merged_gdp$Predicted_Rev <- predicted_vals_95[,1]  # Predicted values
+    merged_gdp$Lower_95 <- predicted_vals_95[,2]      # Lower bound of 95% CI
+    merged_gdp$Upper_95 <- predicted_vals_95[,3]      # Upper bound of 95% CI
+    
+    # 2. Predicted values with confidence intervals for the entire dataset (80% CI)
+    predicted_vals_80 <- predict(lm_model, merged_gdp, 
+                                 interval = "prediction", level = 0.80)
+    
+    # Add predicted values and confidence intervals (80%) to the tibble
+    merged_gdp$Lower_80 <- predicted_vals_80[,2]      # Lower bound of 80% CI
+    merged_gdp$Upper_80 <- predicted_vals_80[,3]      # Upper bound of 80% CI
+    
     
     # 3. Create filtered tibble
     merged_gdp_filtered <- merged_gdp |> 
-      filter(Year %in% c("2023", "2024"))
+      filter(Year %in% c("2023"))
     
     # 4. Plot the Actual vs Predicted 
-    ggplot(merged_gdp, aes_string(x = "`Year-Qtr-Float`")) +  # Dynamically refer to x_var here
+    ggplot(merged_gdp, aes(x = `Year-Qtr-Float`)) +
       # Actual values for all data
       geom_line(aes(y = Total_Rev), color = "blue", size = 1, alpha = 0.7, label = "Actual Total Revenue") +
+      
       # Predicted values starting at 2023
       geom_line(data = merged_gdp_filtered, aes(y = Predicted_Rev), color = "red", linetype = "dashed", size = 1, alpha = 0.7, label = "Predicted Total Revenue") +
-      # Confidence intervals for the predicted values starting at 2023
-      geom_ribbon(data = merged_gdp_filtered, aes(ymin = Lower_95, ymax = Upper_95), alpha = 0.3, fill = "gray70") +
+      
+      # Confidence intervals for the predicted values starting at 2023 (95% CI)
+      geom_ribbon(data = merged_gdp_filtered, aes(ymin = Lower_95, ymax = Upper_95), alpha = 0.3, fill = "gray80") +
+      
+      # Confidence intervals for the predicted values (80% CI)
+      geom_ribbon(data = merged_gdp_filtered, aes(ymin = Lower_80, ymax = Upper_80), alpha = 0.3, fill = "gray70") +
+      
       labs(
         title = glue("Actual Revenue vs Predicted Revenue by Quarter (Predictor Var: {input$line_x_var})"),
-           x = "Year-Month", y = "Total Revenue") +
-      theme_minimal() +
-      theme(legend.position = "top", plot.title = element_text(face = "bold", size = 16)) +
+        y = "Total Revenue (USD)"
+      ) +
+      
+      theme_minimal(base_size = 15) +
+      theme(
+        plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
+        axis.title.x = element_blank(),  # Remove x-axis label
+        axis.title.y = element_text(face = "bold", size = 14),
+        #axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better fit
+        axis.text.y = element_text(size = 12),
+        legend.position = "bottom"  # Position legend at the bottom if applicable
+    
+      ) +
+      
       scale_y_continuous(labels = scales::label_number(big.mark = ","))  # Format y-axis with commas for readability
-   
+    
+    
   })
   
   # GDP Sector Tab: Table with merged data
@@ -188,7 +220,11 @@ function(input, output, session) {
         #breaks = seq(0, max(plot_data()$`Total Rev`, na.rm = TRUE), by = 2500),
         labels = scales::comma  # Format x-axis numbers with commas for better readability
       ) +
-      scale_y_continuous(labels = scales::comma)  # Format y-axis numbers with commas
+      scale_y_continuous(
+        labels = scales::label_number(big.mark = ","),
+        limits = c(8000000, 14000000),   # Set the y-axis limits (start = 8,000,000, end = 14,000,000)
+        breaks = seq(8000000, 14000000, by = 2000000)  # Set the intervals to 2,000,000
+      )  # Format y-axis numbers with commas
   })
   
   # Economic Indicator Tab: LM Line plot with Dynamic X and Y-Axis Variables
@@ -276,7 +312,7 @@ function(input, output, session) {
         plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
         axis.title.x = element_blank(),  # Remove x-axis label
         axis.title.y = element_text(face = "bold", size = 14),
-        axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better fit
+        #axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better fit
         axis.text.y = element_text(size = 12),
         legend.position = "bottom"  # Position legend at the bottom if applicable
       ) +
@@ -338,10 +374,10 @@ function(input, output, session) {
   
   # Quarterly ARIMA Tab: Arima Model Results_Plot
   output$arimaPlot <- renderPlot({
-    req(input$scatter_x_reg)  # Ensure both variables are selected
+    req(input$line_x_var_gdp)  # Ensure both variables are selected
     
     # Get the selected variables for X and Y from the user input
-    x_var <- input$scatter_x_reg
+    x_var <- input$line_x_var_gdp
     
     # Create qtr-level revenue summary
     qtr_rev_arima <- plot_data() |> 
@@ -362,7 +398,7 @@ function(input, output, session) {
       filter(Year < cutoff_year)
     
     total_rev_ts <- ts(model_tib_gdp$Total_Rev, start = min(model_tib_gdp$Year), frequency = 4)
-    gdp_total_ts <- ts(model_tib_gdp[[input$scatter_x_reg]], start = min(model_tib_gdp$Year), frequency = 4)
+    gdp_total_ts <- ts(model_tib_gdp[[input$line_x_var_gdp]], start = min(model_tib_gdp$Year), frequency = 4)
     
     # Fit Quarterly ARIMA model with GDP as an external regressor
     gdp_sales_model <- auto.arima(
@@ -374,7 +410,7 @@ function(input, output, session) {
       arrange(Year) |> 
       filter(Year >= cutoff_year) |>
       filter(Year < 2024) |> 
-      pull(input$scatter_x_reg) # Dynamic x
+      pull(input$line_x_var_gdp) # Dynamic x
     
     forecasted_values <- forecast(gdp_sales_model, 
                                   xreg = log(future_GDP)
@@ -403,10 +439,6 @@ function(input, output, session) {
     
     print(gdp_qtr_rev)
     
-    library(ggplot2)
-    library(scales)
-    library(glue)
-    
     # Assuming 'gdp_qtr_rev' and 'forecast_tib_qtr' are your data frames
     
     ggplot() +
@@ -431,22 +463,23 @@ function(input, output, session) {
                   alpha = 0.3, fill = "gray70") +  # 80% confidence interval
       
       # 
-      scale_y_continuous(labels = label_number(big.mark = ",")) +
+      scale_y_continuous(
+        labels = scales::label_number(big.mark = ",")) +
       
-      # 
+
       theme_minimal(base_size = 15) +
       theme(
         plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
         axis.title.x = element_blank(),  # Remove x-axis label
         axis.title.y = element_text(face = "bold", size = 14),
-        axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better fit
+        #axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better fit
         axis.text.y = element_text(size = 12),
         legend.position = "bottom"  # Position legend at the bottom if applicable
       ) +
       
       # Title
       labs(
-        title = glue("Actual Revenue vs Predicted Revenue by Quarter (Predictor Var: {input$scatter_x_reg})"),
+        title = glue("Actual Revenue vs Predicted Revenue by Quarter (Predictor Var: {input$line_x_var_GDP})"),
         y = "Total Revenue (USD)"
       )
     
@@ -454,10 +487,10 @@ function(input, output, session) {
   
   # Display Quarterly ARIMA Model Summary below the plot
   output$arimaSummary <- renderPrint({
-    req(input$scatter_x_reg)  # Ensure both variables are selected
+    req(input$line_x_var_gdp)  # Ensure both variables are selected
     
     # Get the selected variables for X and Y from the user input
-    x_var <- input$scatter_x_reg
+    x_var <- input$line_x_var_gdp
     
     # Create qtr-level revenue summary
     qtr_rev_arima <- plot_data() |> 
@@ -478,15 +511,26 @@ function(input, output, session) {
       filter(Year < cutoff_year)
     
     total_rev_ts <- ts(model_tib_gdp$Total_Rev, start = min(model_tib_gdp$Year), frequency = 4)
-    gdp_total_ts <- ts(model_tib_gdp[[input$scatter_x_reg]], start = min(model_tib_gdp$Year), frequency = 4)
+    gdp_total_ts <- ts(model_tib_gdp[[input$line_x_var_gdp]], start = min(model_tib_gdp$Year), frequency = 4)
     
     # Fit ARIMA model with GDP as an external regressor
     gdp_sales_model <- auto.arima(
       total_rev_ts, 
-      xreg = log(gdp_total_ts)
+      xreg = gdp_total_ts
     )
-    # Return ARIMA model summary
-    coeftest(gdp_sales_model)
+
+    # Get the ARIMA model coefficients
+    coeftest_output <- coeftest(gdp_sales_model)
+    
+    # Get the ARIMA model summary
+    model_summary <- summary(gdp_sales_model)
+    
+    # Print both outputs as a list
+    list(
+      "ARIMA Model Coefficients" = coeftest_output,
+      "ARIMA Model Summary" = model_summary
+    )
+    
   })
   
   # Quarterly Arima Model Tab: Table with underlying Arima data
@@ -561,7 +605,7 @@ function(input, output, session) {
     # Fit Monthly ARIMA model
     n_gdp_sales_model <- auto.arima(
       m_total_rev_ts, 
-      xreg = x_reg_ts
+      xreg = x_reg_ts, allowmean = TRUE
     )
     
     future_x_reg <- merged_nongdp |> 
@@ -626,7 +670,7 @@ function(input, output, session) {
         plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
         axis.title.x = element_blank(),  # Remove x-axis label
         axis.title.y = element_text(face = "bold", size = 14),
-        axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better fit
+        #axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for better fit
         axis.text.y = element_text(size = 12),
         legend.position = "bottom"  # Position legend at the bottom if applicable
       ) +
@@ -666,7 +710,7 @@ function(input, output, session) {
     # Fit the ARIMA model on the full dataset
     n_gdp_sales_model <- auto.arima(
       m_total_rev_ts, 
-      xreg = x_reg_ts
+      xreg = x_reg_ts, allowmean = TRUE
     )
     
     # Get the ARIMA model coefficients
