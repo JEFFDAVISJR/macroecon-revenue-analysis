@@ -139,8 +139,12 @@ function(input, output, session) {
     
       ) +
       
-      scale_y_continuous(labels = scales::label_number(big.mark = ","))  # Format y-axis with commas for readability
-    
+      scale_y_continuous(
+        labels = scales::label_number(big.mark = ","),
+        expand = c(0, 0),  # Remove padding from the axis
+        breaks = seq(0, 14000000, by = 2000000),  # Adjust breaks as needed
+        limits = c(0, 14000000)  # Force maximum value of 14,000,000
+      )  # Format y-axis with commas for readability
     
   })
   
@@ -464,9 +468,12 @@ function(input, output, session) {
       
       # 
       scale_y_continuous(
-        labels = scales::label_number(big.mark = ",")) +
+        labels = scales::label_number(big.mark = ","),
+        expand = c(0, 0),  # Remove padding from the axis
+        breaks = seq(0, 14000000, by = 2000000),  # Adjust breaks as needed
+        limits = c(0, 14000000)  # Force maximum value of 14,000,000
+      ) +
       
-
       theme_minimal(base_size = 15) +
       theme(
         plot.title = element_text(face = "bold", size = 18, hjust = 0.5),
